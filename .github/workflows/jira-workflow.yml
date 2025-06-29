@@ -1,0 +1,156 @@
+name: TODO to Jira
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  scan-todos:
+    runs-on: ubuntu-latest
+    environment: test_jira
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Java and tools
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Find TODOs and process Jira issues
+
+        env:
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          JIRA_USER: ${{ secrets.JIRA_USER }}
+          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_ISSUE_TYPE: ${{ secrets.JIRA_ISSUE_TYPE || 'Task' }}
+          JIRA_LABELS: ${{ secrets.JIRA_LABELS || 'auto-generated,todo' }}
+        run: |
+          # Функция для поиска существующих задач
+          
+          check_existing_issue() {
+            local summary="$1"
+            # Экранируем кавычки в summary для JQL
+            local escaped_summary=$(echo "$summary" | sed 's/"/\\"/g')
+          
+            local jql=$(jq -n --arg project "$JIRA_PROJECT_KEY" --arg summary "$escaped_summary" \
+            '{
+                jql: "project = \($project) AND summary ~ \"\($summary)\" AND labels = \"auto-generated\" ORDER BY created DESC",
+                maxResults: 1
+            }')
+          
+            response=$(curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$jql" \
+            "$JIRA_URL/rest/api/2/search")
+          
+            echo "$response" | jq -e '.issues[0]' >/dev/null 2>&1 && \
+            echo "$response" | jq -r '.issues[0].key' || echo ""
+          }
+
+          # Поиск уникальных TODO комментариев
+          declare -A unique_todos
+          while IFS=: read -r filepath line_number comment; do
+            # Улучшенная нормализация комментария
+            normalized_comment=$(echo "$comment" | sed -E 's/^[[:space:]]*\/\/[[:space:]]*TODO[[:space:]]*:[[:space:]]*//i' | sed 's/[[:space:]]*$//')
+            # Удаляем все начальные двоеточия и пробелы
+            normalized_comment=$(echo "$normalized_comment" | sed 's/^[[:space:]:]*//')
+          
+            # Пропускаем пустые комментарии
+            [ -z "$normalized_comment" ] && continue
+          
+            key="${normalized_comment,,}" # Приводим к нижнему регистру для унификации
+            if [[ -z "${unique_todos[$key]}" ]]; then
+            unique_todos[$key]="$filepath:$line_number:$normalized_comment"
+            fi
+            done < <(grep -n -E "//[[:space:]]*TODO:" -r . --include="*.java")
+          
+            if [ ${#unique_todos[@]} -eq 0 ]; then
+            echo "No new TODOs found"
+            exit 0
+            fi
+          
+            echo "Found ${#unique_todos[@]} unique TODOs"
+          
+            # Обработка каждого уникального TODO
+            for todo in "${unique_todos[@]}"; do
+          IFS=: read -r filepath line_number comment <<< "$todo"
+          
+          # Формируем корректное summary
+            clean_comment=$(echo "$comment" | sed 's/^[[:space:]:]*//; s/[[:space:]]*$//')
+          summary="TODO: $(echo "$clean_comment" | cut -c1-200)"
+            if [ ${#clean_comment} -gt 200 ]; then
+            summary="${summary:0:197}..."
+            fi
+          
+            # Проверяем существование такой задачи
+            existing_issue=$(check_existing_issue "$summary")
+          
+            if [ -n "$existing_issue" ]; then
+          echo "Issue already exists: $existing_issue ($summary)"
+          # Добавляем ссылку на код в комментарий к существующей задаче
+            repo_url="https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/${filepath#./}#L$line_number"
+            comment_data=$(jq -n \
+          --arg body "Found another occurrence in GitHub: [$repo_url]($repo_url)" \
+            '{ body: $body }')
+          
+            curl -s -u "$JIRA_USER:$JIRA_TOKEN" -X POST \
+          -H "Content-Type: application/json" \
+            -d "$comment_data" \
+            "$JIRA_URL/rest/api/2/issue/$existing_issue/comment" >/dev/null && \
+            echo "Added reference to existing issue $existing_issue"
+            continue
+            fi
+          
+            # Создаем новую задачу
+            issue_data=$(jq -n \
+            --arg project "$JIRA_PROJECT_KEY" \
+            --arg summary "$summary" \
+            --arg description "" \
+            --arg issuetype "$JIRA_ISSUE_TYPE" \
+            --arg labels "$JIRA_LABELS" \
+            '{
+                  fields: {
+                      project: { key: $project },
+                      summary: $summary,
+                      description: $description,
+                      issuetype: { name: $issuetype },
+                      labels: ($labels | split(","))
+                  }
+              }')
+          
+          echo "Creating issue: $summary"
+          
+            response=$(curl -s -u "$JIRA_USER:$JIRA_TOKEN" -X POST \
+          -H "Content-Type: application/json" \
+            -d "$issue_data" \
+            "$JIRA_URL/rest/api/2/issue")
+          
+            if [[ $(echo "$response" | jq -e '.key?' 2>/dev/null) ]]; then
+            issue_key=$(echo "$response" | jq -r '.key')
+          echo "Successfully created issue: $issue_key"
+          
+          # Добавляем ссылку на код в комментарий
+            repo_url="https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/${filepath#./}#L$line_number"
+            comment_data=$(jq -n \
+          --arg body "Linked to GitHub: [$repo_url]" \
+            '{ body: $body }')
+          
+            curl -s -u "$JIRA_USER:$JIRA_TOKEN" -X POST \
+          -H "Content-Type: application/json" \
+            -d "$comment_data" \
+            "$JIRA_URL/rest/api/2/issue/$issue_key/comment" >/dev/null && \
+            echo "Added comment to issue $issue_key"
+            else
+            echo "Failed to create issue"
+          echo "Response: $response"
+          error_msg=$(echo "$response" | jq -r '.errorMessages[]?, .errors? | to_entries[] | "\(.key): \(.value)"' 2>/dev/null)
+            [ -n "$error_msg" ] && echo "Error details: $error_msg"
+            exit 1
+            fi
+            done

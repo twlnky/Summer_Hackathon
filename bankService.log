@@ -146,3 +146,32 @@ This generated password is for development use only. Your security configuration
 2025-06-30T00:12:43.740+03:00  INFO 2789 --- [Summer_Hackathon] [restartedMain] r.m.t.s.SummerHackathonApplication       : Started SummerHackathonApplication in 0.248 seconds (process running for 9.171)
 2025-06-30T00:12:43.740+03:00  INFO 2789 --- [Summer_Hackathon] [restartedMain] o.s.b.a.b.JobLauncherApplicationRunner   : Running default command line with: []
 2025-06-30T00:12:43.741+03:00  INFO 2789 --- [Summer_Hackathon] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2025-06-30T00:28:51.379+03:00  INFO 2789 --- [Summer_Hackathon] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-06-30T00:28:51.381+03:00  INFO 2789 --- [Summer_Hackathon] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-06-30T00:28:51.383+03:00  INFO 2789 --- [Summer_Hackathon] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2025-06-30T00:28:51.383+03:00  INFO 2789 --- [Summer_Hackathon] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2025-06-30T00:46:47.204+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] r.m.t.s.SummerHackathonApplication       : Starting SummerHackathonApplication using Java 22.0.2 with PID 4463 (/Users/mac/IdeaProjects/Summer_Hackathon/target/classes started by mac in /Users/mac/IdeaProjects/Summer_Hackathon)
+2025-06-30T00:46:47.204+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] r.m.t.s.SummerHackathonApplication       : The following 1 profile is active: "dev"
+2025-06-30T00:46:47.218+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-06-30T00:46:47.218+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-06-30T00:46:47.722+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-06-30T00:46:47.728+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-06-30T00:46:47.728+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.42]
+2025-06-30T00:46:47.740+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-06-30T00:46:47.741+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 523 ms
+2025-06-30T00:46:47.802+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-06-30T00:46:47.834+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@264f1a54
+2025-06-30T00:46:47.834+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-06-30T00:46:47.987+03:00  WARN 4463 --- [Summer_Hackathon] [restartedMain] ion$DefaultTemplateResolverConfiguration : Cannot find template location: classpath:/templates/ (please add some templates, check your Thymeleaf configuration, or set spring.thymeleaf.check-template-location=false)
+2025-06-30T00:46:48.101+03:00  WARN 4463 --- [Summer_Hackathon] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 76a728df-e4c2-46a0-90e5-d68b1d9587bf
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-06-30T00:46:48.104+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-06-30T00:46:48.154+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-06-30T00:46:48.163+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-06-30T00:46:48.192+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-06-30T00:46:48.197+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] r.m.t.s.SummerHackathonApplication       : Started SummerHackathonApplication in 1.164 seconds (process running for 1.461)
+2025-06-30T00:46:48.198+03:00  INFO 4463 --- [Summer_Hackathon] [restartedMain] o.s.b.a.b.JobLauncherApplicationRunner   : Running default command line with: []
