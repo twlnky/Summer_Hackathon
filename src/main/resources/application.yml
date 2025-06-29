@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: Summer_Hackathon
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hackathon
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  profiles:
+    active: dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+      format_sql: true
+    show-sql: false
+
+logging:
+  level:
+
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+  file:
+    name: bankService.log
+    path: /
+admin:
+  password:
+    1
+
+test:
+  records:
+    count: 13
