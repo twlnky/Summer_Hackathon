@@ -1,31 +1,33 @@
 spring:
   application:
-    name: Summer_Hackathon
+    name: SecurityRestAPI
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: ${MAIL_PROTOCOL}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLE}
+            required: ${MAIL_STARTTLS_REQUIRED}
   datasource:
-    url: jdbc:postgresql://localhost:5432/hackathon
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
-  profiles:
-    active: dev
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER}
   jpa:
     hibernate:
-      ddl-auto: update
-      format_sql: true
-    show-sql: false
+      ddl-auto: ${HIBERNATE_DDL}
 
-logging:
-  level:
-
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
-  file:
-    name: bankService.log
-    path: /
-admin:
-  password:
-    1
-
-test:
-  records:
-    count: 13
+security:
+  jwt:
+    access:
+      secret: ${JWT_ACCESS_SECRET}
+      expires: ${JWT_ACCESS_EXPIRES}
+    refresh:
+      secret: ${JWT_REFRESH_SECRET}
+      expires: ${JWT_REFRESH_EXPIRES}
