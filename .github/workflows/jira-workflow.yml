@@ -6,7 +6,7 @@ on:
 jobs:
   scan-todos:
     runs-on: ubuntu-latest
-    environment: test_jira
+    environment: jira
     steps:
       - uses: actions/checkout@v3
 
