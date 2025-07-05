@@ -15,7 +15,6 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import rut.miit.tech.summer_hackathon.domain.dto.ErrorDTO;
 import rut.miit.tech.summer_hackathon.service.JwtService;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
