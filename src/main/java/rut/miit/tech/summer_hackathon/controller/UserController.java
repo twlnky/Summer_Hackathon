@@ -6,19 +6,24 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rut.miit.tech.summer_hackathon.domain.dto.UserDTO;
 import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.service.user.UserService;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
 
-    @PreAuthorize("@security.checkAccessToUser(#id)")
-    @GetMapping("/{id}")
-    public User getUserById(@PathVariable String id) {
-        return userService.getById(Long.parseLong(id));
+
+    @GetMapping("/public/{id}")
+    public UserDTO getUserById(@PathVariable String id) {
+        return userService.getById(Long.parseLong(id)).toDto();
     }
+
+
 
 }

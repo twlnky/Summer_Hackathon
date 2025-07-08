@@ -22,6 +22,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: ${HIBERNATE_DDL}
+    show-sql: ${SHOW_SQL}
 
 security:
   jwt:

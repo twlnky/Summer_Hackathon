@@ -2,56 +2,60 @@ package rut.miit.tech.summer_hackathon.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import rut.miit.tech.summer_hackathon.domain.dto.UserDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@Table(name = "users")
-@Entity
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@Setter
+@Entity
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "users")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
-    private String username;
+    //@Column(name = "first_name", nullable = false)
+    private String firstName;
 
-    @Setter
-    private String password;
+    //@Column(name = "last_name", nullable = false)
+    private String lastName;
 
-    @Setter
-    private boolean isBanned;
+    //@Column(name = "middle_name", nullable = false)
+    private String middleName;
 
-    @Setter
-    private boolean isEnable;
+    @ManyToMany
+    @JoinTable(
+            name = "user_department",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "department_id")
+    )
+    private List<Department> departments = new ArrayList<>();
 
-    @Setter
+    @Column(name = "office_number")
+    private Long officeNumber;
+
+    //@Column(name = "business_phone", nullable = false)
+    private String businessPhone;
+
+    //@Column(name = "personal_phone", nullable = false)
+    private String personalPhone;
+
+    //@Column(nullable = false, unique = true)
     private String email;
 
-    @Enumerated(EnumType.STRING)
-    @ElementCollection(targetClass = Role.class)
-    @Column(name = "roles")
-    private List<Role> roles;
+    //@Column(name = "user_position", nullable = false)
+    private String position;
 
-    //TODO: Реализовать недостоящие поля модели User в соответсвии с базой данных
-    /*
-    * Поля
-    * last_name varchar(255)
-    * middle_name varchar(255)
-    * реализиовать связь сотрудника с его департаментом(department_id(long)) (какая это связь? (Явно укажи фетч лейзи))
-    * business_phone varchar(255) внимательно с валидацией номер должен валидироваться(не слишком длинный содержать опреденные знаки(посмотри про regex))
-    * personal_phone varchar(255) внимательно с валидацией номер должен валидироваться(не слишком длинный содержать опреденные знаки(посмотри про regex))
-    * user_position varchar(255)
-    * note
-    * user_role взять и связать с енамом Role
-    * свяжи password и user_password @JoinColumn
-    * свяжи username и user_username @JoinColumn
-    * Валидитурй в DTO
-    * */
+    //@Column(nullable = false, columnDefinition = "TEXT")
+    private String note;
 
+    public UserDTO toDto() {
+        return new UserDTO(id,firstName,lastName,middleName,officeNumber,personalPhone,position,note,email,
+                List.of());
+    }
 }
-

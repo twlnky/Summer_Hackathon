@@ -1,26 +1,39 @@
 package rut.miit.tech.summer_hackathon.domain.model;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.*;
+import lombok.*;
+import rut.miit.tech.summer_hackathon.domain.dto.DepartmentDTO;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Getter
+@Entity
+@Table(name = "department")
 public class Department {
-    //TODO: реализовать сущность Department
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JoinColumn(name = "department_name")
+    @Column(name = "department_name")
     private String name;
 
-    /*
-    * реализуй сущность Department
-    * Model DTO(с валидацией)
-    * DepartmentController(внимательно изучи роутинг проекта)
-    * DepartmentService и его имплиментацию
-    * DepartmentRepository
-    * изучай код проекта и делай по аналогии
-    * */
+    @ManyToOne
+    private Moderator moderator;
+
+    @ManyToMany(mappedBy = "departments")
+    private List<User> users = new ArrayList<>();
+
+    @ElementCollection
+    private List<String> tags;
+
+    public DepartmentDTO toDto(){
+       return new DepartmentDTO(id, name, moderator == null ? null : moderator.getId());
+    }
+
 }

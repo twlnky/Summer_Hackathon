@@ -1,7 +1,9 @@
 package rut.miit.tech.summer_hackathon.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -18,13 +20,15 @@ import rut.miit.tech.summer_hackathon.service.JwtService;
 
 import java.util.List;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-            "/auth/**",
-            "/public/**"
+            "/api/v1/auth/**",
+            "/api/v1/*/public/**",
+            "/api/v1/search/**"
     );
 
     public SecurityConfig(PasswordEncoder passwordEncoder,
@@ -53,6 +57,10 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS.toArray(new String[0])).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -66,4 +74,6 @@ public class SecurityConfig {
         provider.setUserDetailsService(userDetailsService);
         return new ProviderManager(provider);
     }
+
+
 }
