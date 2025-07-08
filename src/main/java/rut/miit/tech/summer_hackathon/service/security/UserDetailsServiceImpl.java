@@ -1,7 +1,6 @@
 package rut.miit.tech.summer_hackathon.service.security;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -9,9 +8,6 @@ import org.springframework.stereotype.Service;
 import rut.miit.tech.summer_hackathon.domain.exception.ResourceNotFoundException;
 import rut.miit.tech.summer_hackathon.domain.model.ModeratorDetailsImpl;
 import rut.miit.tech.summer_hackathon.service.moderator.ModeratorService;
-
-import java.util.Collection;
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service

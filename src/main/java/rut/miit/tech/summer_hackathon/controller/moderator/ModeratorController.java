@@ -12,55 +12,56 @@ import rut.miit.tech.summer_hackathon.domain.model.Moderator;
 import rut.miit.tech.summer_hackathon.service.moderator.ModeratorService;
 import rut.miit.tech.summer_hackathon.service.util.PageResult;
 
+
 @RestController
 @RequestMapping("/api/v1/moderators")
 @RequiredArgsConstructor
 public class ModeratorController {
     private final ModeratorService moderatorService;
-        /*
-* MODERATORS
-/moderators - POST - admin
-/moderators - GET - admin
-/moderators/{id} - GET - with departments ids - moder_owner/admin
-/moderators/{id} - DELETE -admin
-/moderators/{id} - PUT - admin
- */
+
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping()
-    public PageResult<ModeratorDTO> getAll(@ModelAttribute ModeratorFilter filter,
-                                           @ModelAttribute PageParam pageParam,
-                                           @ModelAttribute SortParam sortParam){
+    public PageResult<ModeratorDTO> getAll(
+            @ModelAttribute ModeratorFilter filter,
+            @ModelAttribute PageParam pageParam,
+            @ModelAttribute SortParam sortParam) {
+
+
         return moderatorService.getAll(filter, pageParam.toPageable(sortParam))
                 .map(Moderator::toDto);
     }
 
+
     @PreAuthorize("hasAuthority('ADMIN') or @security.checkAccessToModer(#id)")
     @GetMapping("/{id}")
-    public ModeratorDTO getById(@PathVariable Long id){
+    public ModeratorDTO getById(@PathVariable Long id) {
+
         return moderatorService.getById(id).toDto();
     }
+
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public ModeratorDTO create(@Valid @RequestBody ModeratorDTO moderator){
+    public ModeratorDTO create(@Valid @RequestBody ModeratorDTO moderator) {
+
         return moderatorService.save(moderator.toModel()).toDto();
     }
 
+
     @PreAuthorize("hasAuthority('ADMIN')")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PutMapping
-    public ModeratorDTO update(@Valid @RequestBody ModeratorDTO moderator){
+    public ModeratorDTO update(@Valid @RequestBody ModeratorDTO moderator) {
         return moderatorService.update(moderator.toModel()).toDto();
     }
+
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable Long id){
+    public void deleteById(@PathVariable Long id) {
         moderatorService.getById(id);
         moderatorService.delete(id);
     }
-
 }

@@ -15,12 +15,14 @@ public class PageResult<T> {
     private final List<T> queryResult;
     private final Integer pageCount;
     private final Integer pageSize;
+    private final Long total;
 
     public <R> PageResult<R> map(Function<T, R> mapper) {
-        return new PageResult<>(queryResult.stream().map(mapper).toList(), pageCount, pageSize);
+        return new PageResult<>(queryResult.stream().map(mapper).toList(), pageCount, pageSize, total);
     }
 
     public static <T> PageResult<T> of(Page<T> page, Pageable pageable) {
-        return new PageResult<T>(page.stream().toList(), page.getTotalPages(), pageable.isUnpaged() ? -1 : pageable.getPageSize());
+        return new PageResult<T>(page.stream().toList(), page.getTotalPages(), pageable.isUnpaged() ? -1 : pageable.getPageSize(),
+                page.getTotalElements());
     }
 }

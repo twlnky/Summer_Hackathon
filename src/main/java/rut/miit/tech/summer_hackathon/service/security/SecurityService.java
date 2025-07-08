@@ -19,8 +19,8 @@ public class SecurityService {
 
     public boolean checkAccessToModer(Long id){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return moderatorService.getById(id).getLogin().equals(userDetails.getUsername());
+        String username = (String)authentication.getPrincipal();
+        return moderatorService.getById(id).getLogin().equals(username);
     }
 
     public boolean checkAccessToUser(Long id) {

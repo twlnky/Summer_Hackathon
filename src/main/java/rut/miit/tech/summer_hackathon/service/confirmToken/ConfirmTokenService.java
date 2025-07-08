@@ -11,6 +11,7 @@ public class ConfirmTokenService {
 
     private final ConfirmTokenRepository confirmTokenRepository;
 
+
     public void confirmToken(ConfirmToken confirmToken) {
         confirmTokenRepository.save(confirmToken);
     }

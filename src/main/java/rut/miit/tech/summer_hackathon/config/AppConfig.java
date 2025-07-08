@@ -5,9 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,15 +12,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
 import java.util.Random;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class AppConfig {
-    private final Environment environment;
+
 
     @Bean
     public UserDetails admin(){
@@ -35,28 +30,11 @@ public class AppConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
     public ModelMapper modelMapper() {
         return new ModelMapper();
     }
-
-    @Bean
-    public JavaMailSender mailSender() {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(environment.getProperty("spring.mail.host"));
-        mailSender.setPort(Integer.parseInt(Objects.requireNonNull(environment.getProperty("spring.mail.port"))));
-        mailSender.setUsername(environment.getProperty("spring.mail.username"));
-        mailSender.setPassword(environment.getProperty("spring.mail.password"));
-
-        Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.transport.protocol", environment.getProperty("spring.mail.protocol"));
-        props.put("mail.smtp.auth", environment.getProperty("spring.mail.properties.mail.smtp.auth"));
-        props.put("mail.smtp.starttls.enable", environment.getProperty("spring.mail.properties.mail.smtp.starttls.enable"));
-        props.put("mail.smtp.starttls.required", environment.getProperty("spring.mail.properties.mail.smtp.starttls.required"));
-        return mailSender;
-    }
-
 }

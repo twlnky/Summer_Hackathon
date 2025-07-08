@@ -31,10 +31,12 @@ public class JwtFilter extends OncePerRequestFilter {
         this.openEndpoints = openEndpoints;
     }
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+
         String path = request.getRequestURI();
         if (isOpenEndpoint(path)) {
             filterChain.doFilter(request, response);
@@ -48,11 +50,14 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
             String token = authHeader.substring(7);
+
             DecodedJWT jwt = jwtService.decodeAccessToken(token);
+
 
             var authentication = new UsernamePasswordAuthenticationToken(
                     jwt.getSubject(),
                     null,
+
                     jwt.getClaim("roles").asList(String.class)
                             .stream()
                             .map(SimpleGrantedAuthority::new)
@@ -60,8 +65,9 @@ public class JwtFilter extends OncePerRequestFilter {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
             filterChain.doFilter(request, response);
-            //after all filters and controller
+
 
         } catch (Exception e) {
             log.error("JWT processing error: {}", e.getMessage());

@@ -8,38 +8,44 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import rut.miit.tech.summer_hackathon.domain.dto.ErrorDTO;
-
 import java.time.LocalDateTime;
 
 @Slf4j
 @RestControllerAdvice
 public class ApiControllerAdvice {
 
+
     @ResponseStatus
     @ExceptionHandler
     public ErrorDTO handleAnyException(Exception exception) {
         log.error("Unexpected error", exception);
-        return ErrorDTO.builder().date(LocalDateTime.now().toString())
+        return ErrorDTO.builder()
+                .date(LocalDateTime.now().toString())
                 .message(exception.getMessage())
-                .status("500").build();
+                .status("500")
+                .build();
     }
 
+
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler
+    @ExceptionHandler(AuthenticationException.class)
     public ErrorDTO handleAuthException(AuthenticationException exception) {
         log.error("Authentication error", exception);
-        return ErrorDTO.builder().date(LocalDateTime.now().toString())
+        return ErrorDTO.builder()
+                .date(LocalDateTime.now().toString())
                 .message(exception.getMessage())
-                .status("401").build();
+                .status("401")
+                .build();
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    @ExceptionHandler
+    @ExceptionHandler(AccessDeniedException.class)
     public ErrorDTO handleAccessDeniedException(AccessDeniedException exception) {
         log.error("Access Denied", exception);
-        return ErrorDTO.builder().date(LocalDateTime.now().toString())
+        return ErrorDTO.builder()
+                .date(LocalDateTime.now().toString())
                 .message(exception.getMessage())
-                .status("403").build();
+                .status("403")
+                .build();
     }
-
 }

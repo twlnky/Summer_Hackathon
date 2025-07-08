@@ -4,19 +4,25 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+
 public record RegisterDTO(
+
         @NotBlank(message = "Имя не может быть пустым")
-        @Size(min = 1, max = 20, message = "Поле имени должно быть " +
-                "положительным и содержать не более 20 символов ")
+        @Size(min = 1, max = 20, message = "Поле имени должно быть положительным и содержать не более 20 символов")
         String username,
+
 
         @NotBlank(message = "Пароль не может быть пустым")
         String password,
 
-        @NotBlank(message = "Неправильное сообщение")
+
+        @NotBlank(message = "Подтверждение пароля не может быть пустым")
         String confirmPassword,
+
 
         @NotBlank(message = "Поле почты не может быть пустым")
         @Email(message = "Почта не корректна")
         String email
-) {}
+) {
+
+}

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class ModeratorServiceImpl implements ModeratorService{
+
     private final ModeratorRepository moderatorRepository;
     private final DepartmentService departmentService;
     private final PasswordEncoder passwordEncoder;
@@ -36,11 +37,14 @@ public class ModeratorServiceImpl implements ModeratorService{
 
         List<Department> departments = departmentService.getAllByIds(moderator.getDepartments()
                 .stream().map(Department::getId).toList());
+
         moderator.setPassword(passwordEncoder.encode(moderator.getPassword()));
+
         Moderator saved = moderatorRepository.save(moderator);
         for(Department department: departments){
             department.setModerator(moderator);
         }
+
         departmentService.saveAll(departments);
         return saved;
     }
@@ -54,7 +58,6 @@ public class ModeratorServiceImpl implements ModeratorService{
     public Moderator update(Moderator moderator) {
         Moderator nonUpdated = getById(moderator.getId());
         moderator.setPassword(nonUpdated.getPassword());
-        //Старые ид департаментов которые привязаны к модератору
         List<Department> oldDeps = departmentService.getAllByModeratorId(moderator.getId());
         //новые ид департаментов но не привязанные
         List<Department> newDeps = departmentService.getAllByIds(

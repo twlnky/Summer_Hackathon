@@ -4,14 +4,15 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 
-@Table
+
+@Table(name = "confirm_tokens")
 @Entity
 @RequiredArgsConstructor
 @Getter
 public class ConfirmToken {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +26,4 @@ public class ConfirmToken {
 
     @ManyToOne(fetch = FetchType.EAGER)
     private User user;
-
-
 }

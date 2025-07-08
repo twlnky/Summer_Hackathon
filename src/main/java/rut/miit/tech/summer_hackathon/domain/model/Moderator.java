@@ -12,7 +12,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "moderator")
+@Table(name = "moderator", indexes = {
+        @Index(name = "idx_moderator_id", columnList = "id"),
+        @Index(name = "idx_moderator_login", columnList = "login"),
+        @Index(name = "idx_moderator_password", columnList = "password")
+})
 public class Moderator {
 
     @Id
