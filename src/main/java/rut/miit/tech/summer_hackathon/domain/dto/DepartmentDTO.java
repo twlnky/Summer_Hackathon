@@ -7,17 +7,18 @@ import rut.miit.tech.summer_hackathon.domain.model.Department;
 import rut.miit.tech.summer_hackathon.domain.model.Moderator;
 
 public record DepartmentDTO(
-
-        @NotNull
-        @Positive
         Long id,
-
 
         @NotBlank
         String name,
 
-
-        Long moderatorId
+        Long moderatorId,
+        
+        // Добавляем информацию о модераторе
+        String moderatorLogin,
+        String moderatorFirstName,
+        String moderatorLastName,
+        String moderatorMiddleName
 ) {
 
         public Department toModel() {

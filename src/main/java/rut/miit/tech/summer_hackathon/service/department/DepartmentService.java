@@ -49,6 +49,9 @@ public interface DepartmentService {
 
     PageResult<Department> getAllByRequest(String request, Pageable pageable);
 
+    // Добавить пользователя в департамент
+    void addUserToDepartment(Long departmentId, Long userId);
 
-
+    // Удалить пользователя из департамента
+    void removeUserFromDepartment(Long departmentId, Long userId);
 }

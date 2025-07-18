@@ -30,6 +30,15 @@ public class Moderator {
     private String password;
 
     @Setter
+    private String firstName;
+
+    @Setter
+    private String lastName;
+
+    @Setter
+    private String middleName;
+
+    @Setter
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "moderator")
     private List<Department> departments;
 

@@ -2,8 +2,6 @@ package rut.miit.tech.summer_hackathon.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import rut.miit.tech.summer_hackathon.domain.dto.DepartmentDTO;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +28,8 @@ public class Department {
     @Column(name = "department_name")
     private String name;
 
-    @Fetch(FetchMode.JOIN)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "moderator_id")
     private Moderator moderator;
 
     @ManyToMany(mappedBy = "departments")
@@ -46,7 +44,11 @@ public class Department {
         return new DepartmentDTO(
                 id,
                 name,
-                moderator != null ? moderator.getId() : null
+                moderator != null ? moderator.getId() : null,
+                moderator != null ? moderator.getLogin() : null,
+                moderator != null ? moderator.getFirstName() : null,
+                moderator != null ? moderator.getLastName() : null,
+                moderator != null ? moderator.getMiddleName() : null
         );
     }
 }

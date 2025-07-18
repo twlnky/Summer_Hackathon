@@ -25,12 +25,12 @@ public class AppConfig {
         String login = "admin";
         String password = Long.toHexString(new Random().nextLong());
         log.info("Generated password for admin: {}", password);
-        return new User(login,password, List.of(new SimpleGrantedAuthority("ADMIN")));
+        return new User(login,passwordEncoder().encode(password), List.of(new SimpleGrantedAuthority("ADMIN")));
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+        return new BCryptPasswordEncoder();
     }
 
     @Bean

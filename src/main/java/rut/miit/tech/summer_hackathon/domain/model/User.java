@@ -78,7 +78,9 @@ public class User {
     private String note;
 
     public UserDTO toDto() {
-        return new UserDTO(id,firstName,lastName,middleName,officeNumber,personalPhone,position,note,moderator.getId(),email,
+        return new UserDTO(id,firstName,lastName,middleName,officeNumber,personalPhone,position,note,
+                moderator == null ? null :
+                moderator.getId(),email,
                 List.of());
     }
 

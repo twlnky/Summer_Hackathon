@@ -1,6 +1,5 @@
 package rut.miit.tech.summer_hackathon.service.department;
 
-import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -8,7 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rut.miit.tech.summer_hackathon.controller.department.DepartmentFilter;
 import rut.miit.tech.summer_hackathon.domain.model.Department;
+import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.repository.DepartmentRepository;
+import rut.miit.tech.summer_hackathon.repository.UserRepository;
 import rut.miit.tech.summer_hackathon.service.util.PageResult;
 
 import java.util.List;
@@ -20,16 +21,12 @@ import java.util.Optional;
 public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentRepository departmentRepository;
+    private final UserRepository userRepository;
 
 
     @Override
     public PageResult<Department> getAll(Specification<Department> filter, Pageable pageable) {
-        filter = filter.and(
-                ((root, query, cb) -> {
-                    root.fetch("moderator", JoinType.LEFT);
-                    return cb.and();
-                })
-        );
+        // Убираем дублирующийся fetch, так как уже есть @Fetch(FetchMode.JOIN) в сущности Department
         return PageResult.of(
                 departmentRepository.findAll(filter, pageable), // Стандартный запрос JPA
                 pageable // Сохраняет параметры пагинации
@@ -51,7 +48,26 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public void deleteById(Long id) {
-        departmentRepository.deleteById(id); // Прямое делегирование
+        // Сначала получаем департамент, чтобы проверить его существование
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Department not found with id: " + id));
+        
+        // Создаем спецификацию для поиска пользователей, связанных с этим департаментом
+        Specification<User> spec = (root, query, criteriaBuilder) -> {
+            return criteriaBuilder.isMember(department, root.get("departments"));
+        };
+        
+        // Получаем всех пользователей, связанных с этим департаментом
+        List<User> usersInDepartment = userRepository.findAll(spec);
+        
+        // Отвязываем всех пользователей от этого департамента
+        for (User user : usersInDepartment) {
+            user.getDepartments().remove(department);
+            userRepository.save(user);
+        }
+        
+        // Теперь можно безопасно удалить департамент
+        departmentRepository.deleteById(id);
     }
 
 
@@ -81,10 +97,10 @@ public class DepartmentServiceImpl implements DepartmentService {
         );
     }
 
-    //________________________________________________________________Доделать если надо будет
     @Override
     public Department getById(Long id) {
-        return null;
+        return departmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Department not found with id: " + id));
     }
 
     @Override
@@ -116,5 +132,31 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public List<Department> updateAll(List<Department> newDeps) {
         return List.of();
+    }
+
+    @Override
+    public void addUserToDepartment(Long departmentId, Long userId) {
+        Department department = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new RuntimeException("Department not found with id: " + departmentId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        // Добавляем пользователя в департамент, если его там еще нет
+        if (!user.getDepartments().contains(department)) {
+            user.getDepartments().add(department);
+            userRepository.save(user);
+        }
+    }
+
+    @Override
+    public void removeUserFromDepartment(Long departmentId, Long userId) {
+        Department department = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new RuntimeException("Department not found with id: " + departmentId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        // Удаляем пользователя из департамента
+        user.getDepartments().remove(department);
+        userRepository.save(user);
     }
 }

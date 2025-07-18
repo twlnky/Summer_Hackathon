@@ -78,6 +78,13 @@
             <version>${modelmapper.version}</version>
         </dependency>
 
+        <!-- Java Faker for generating test data -->
+        <dependency>
+            <groupId>com.github.javafaker</groupId>
+            <artifactId>javafaker</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+
         <!-- Environment Variables -->
         <dependency>
             <groupId>me.paulschwarz</groupId>

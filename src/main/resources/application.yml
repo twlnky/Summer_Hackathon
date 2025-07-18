@@ -29,4 +29,3 @@ security:
     access:
       secret: ${JWT_ACCESS_SECRET}
       expires: ${JWT_ACCESS_EXPIRES}
-

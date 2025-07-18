@@ -69,5 +69,19 @@ public class DepartmentController {
         departmentService.deleteById(id);
     }
 
+    // Добавить пользователя в департамент
+    @PostMapping("/{departmentId}/users/{userId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    @ResponseStatus(code = HttpStatus.OK)
+    public void addUserToDepartment(@PathVariable Long departmentId, @PathVariable Long userId) {
+        departmentService.addUserToDepartment(departmentId, userId);
+    }
 
+    // Удалить пользователя из департамента
+    @DeleteMapping("/{departmentId}/users/{userId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void removeUserFromDepartment(@PathVariable Long departmentId, @PathVariable Long userId) {
+        departmentService.removeUserFromDepartment(departmentId, userId);
+    }
 }
