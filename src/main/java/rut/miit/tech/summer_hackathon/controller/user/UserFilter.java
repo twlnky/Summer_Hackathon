@@ -15,29 +15,32 @@ public class UserFilter implements Specification<User> {
 
     @Override
     public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
-        String globalSearch = String.join(" ",
-                firstName != null ? firstName : "",
-                lastName != null ? lastName : "",
-                middleName != null ? middleName : ""
-        ).trim();
+        List<String> searchTerms = new ArrayList<>();
+        
+        // Собираем все непустые поисковые термы
+        if (firstName != null && !firstName.trim().isEmpty()) {
+            searchTerms.add(firstName.trim());
+        }
+        if (lastName != null && !lastName.trim().isEmpty()) {
+            searchTerms.add(lastName.trim());
+        }
+        if (middleName != null && !middleName.trim().isEmpty()) {
+            searchTerms.add(middleName.trim());
+        }
 
-
-        if (globalSearch.isEmpty()) {
+        if (searchTerms.isEmpty()) {
             return cb.conjunction();
         }
 
-
-        String[] searchTerms = globalSearch.split("\\s+");
         List<Predicate> predicates = new ArrayList<>();
 
-
+        // Для каждого поискового терма создаем предикат поиска по всем полям
         for (String term : searchTerms) {
             if (!term.isEmpty()) {
                 String searchTerm = "%" + term.toLowerCase() + "%";
                 predicates.add(createWordPredicate(root, cb, searchTerm));
             }
         }
-
 
         return cb.and(predicates.toArray(new Predicate[0]));
     }
@@ -51,12 +54,48 @@ public class UserFilter implements Specification<User> {
                 "position", "note"
         };
 
-
         for (String field : userFields) {
-            Expression<String> fieldLower = cb.lower(root.get(field));
-            termPredicates.add(cb.like(fieldLower, searchTerm));
+            try {
+                Expression<String> fieldLower = cb.lower(root.get(field));
+                termPredicates.add(cb.like(fieldLower, searchTerm));
+            } catch (Exception e) {
+                // Игнорируем поля, которые могут быть null или недоступны
+            }
+        }
+
+        // Также ищем по номеру кабинета как строке
+        try {
+            Expression<String> officeNumberStr = cb.toString(root.get("officeNumber"));
+            termPredicates.add(cb.like(officeNumberStr, searchTerm.replace("%", "")));
+        } catch (Exception e) {
+            // Игнорируем если поле недоступно
         }
 
         return cb.or(termPredicates.toArray(new Predicate[0]));
+    }
+
+    // Геттеры и сеттеры для Spring автоматического связывания параметров
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
     }
 }

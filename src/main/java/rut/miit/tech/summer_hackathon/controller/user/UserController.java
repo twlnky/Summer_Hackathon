@@ -20,12 +20,19 @@ import rut.miit.tech.summer_hackathon.service.util.PageResult;
 public class UserController {
     private final UserService userService;
 
-    @GetMapping()
+    @GetMapping("/public")
     public PageResult<UserDTO> getAllUsers(@ModelAttribute UserFilter userFilter,
                                            @ModelAttribute PageParam pageParam,
                                            @ModelAttribute SortParam sortParam){
         return userService.getAll(userFilter, pageParam.toPageable(sortParam)).map(User::toDto);
+    }
 
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    public PageResult<UserDTO> getAllUsersPrivate(@ModelAttribute UserFilter userFilter,
+                                                  @ModelAttribute PageParam pageParam,
+                                                  @ModelAttribute SortParam sortParam){
+        return userService.getAll(userFilter, pageParam.toPageable(sortParam)).map(User::toDto);
     }
 
 
