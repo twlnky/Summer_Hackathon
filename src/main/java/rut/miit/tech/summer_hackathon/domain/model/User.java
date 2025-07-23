@@ -81,7 +81,7 @@ public class User {
         return new UserDTO(id,firstName,lastName,middleName,officeNumber,personalPhone,position,note,
                 moderator == null ? null :
                 moderator.getId(),email,
-                List.of());
+                departments != null ? departments.stream().map(department -> department.getId()).toList() : List.of());
     }
 
 }

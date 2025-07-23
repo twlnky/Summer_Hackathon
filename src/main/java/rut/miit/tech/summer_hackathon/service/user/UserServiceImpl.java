@@ -1,5 +1,6 @@
 package rut.miit.tech.summer_hackathon.service.user;
 
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.Banner;
@@ -132,12 +133,40 @@ public class UserServiceImpl implements UserService {
         if (request.isBlank()) {
             return getAll(new UserFilter(), pageable);
         }
-        Specification<User> filter = ((root, query, cb) ->
-                cb.or(
-                        cb.like(root.get("firstName"), "%" + request + "%"),
-                        cb.like(root.get("lastName"), "%" + request + "%"),
-                        cb.like(root.get("middleName"), "%" + request + "%")
-                ));
+        
+        Specification<User> filter = ((root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // Поиск по текстовым полям - добавим вариант без LOWER для кириллицы
+            String lowerRequest = request.toLowerCase();
+            
+            // Поиск по именам и фамилиям - как с LOWER, так и без
+            predicates.add(cb.like(cb.lower(root.get("firstName")), "%" + lowerRequest + "%"));
+            predicates.add(cb.like(root.get("firstName"), "%" + request + "%"));
+            predicates.add(cb.like(cb.lower(root.get("lastName")), "%" + lowerRequest + "%"));
+            predicates.add(cb.like(root.get("lastName"), "%" + request + "%"));
+            predicates.add(cb.like(cb.lower(root.get("middleName")), "%" + lowerRequest + "%"));
+            predicates.add(cb.like(root.get("middleName"), "%" + request + "%"));
+            
+            // Email и другие поля
+            predicates.add(cb.like(cb.lower(root.get("email")), "%" + lowerRequest + "%"));
+            predicates.add(cb.like(root.get("personalPhone"), "%" + request + "%"));
+            predicates.add(cb.like(cb.lower(root.get("position")), "%" + lowerRequest + "%"));
+            predicates.add(cb.like(root.get("position"), "%" + request + "%"));
+            predicates.add(cb.like(cb.lower(root.get("note")), "%" + lowerRequest + "%"));
+            predicates.add(cb.like(root.get("note"), "%" + request + "%"));
+            
+            // Поиск по числовому полю officeNumber
+            try {
+                Long officeNumberLong = Long.parseLong(request);
+                predicates.add(cb.equal(root.get("officeNumber"), officeNumberLong));
+            } catch (NumberFormatException e) {
+                // Если запрос не является числом, просто игнорируем поиск по officeNumber
+            }
+            
+            return cb.or(predicates.toArray(new Predicate[0]));
+        });
+        
         return PageResult.of(userRepository.findAll(filter, pageable), pageable);
     }
 
