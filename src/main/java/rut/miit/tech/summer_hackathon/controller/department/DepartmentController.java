@@ -58,8 +58,8 @@ public class DepartmentController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
     @ResponseStatus(code = HttpStatus.ACCEPTED)
-    public DepartmentDTO update(@Valid @RequestBody DepartmentDTO departmentDTO){
-        return departmentService.update(departmentDTO.toModel()).toDto();
+    public DepartmentDTO update(@PathVariable Long id, @Valid @RequestBody DepartmentDTO departmentDTO){
+        return departmentService.update(id, departmentDTO.toModel()).toDto();
     }
 
     @DeleteMapping("/{id}")

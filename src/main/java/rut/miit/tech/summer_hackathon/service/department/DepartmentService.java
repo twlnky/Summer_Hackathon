@@ -30,7 +30,7 @@ public interface DepartmentService {
     Department save(Department department);
 
 
-    Department update(Department department);
+    Department update(Long id, Department department);
 
 
     void deleteById(Long id);

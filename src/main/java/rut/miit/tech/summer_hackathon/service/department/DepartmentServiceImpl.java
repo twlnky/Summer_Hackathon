@@ -41,8 +41,18 @@ public class DepartmentServiceImpl implements DepartmentService {
 
 
     @Override
-    public Department update(Department department) {
-        return departmentRepository.save(department); // JPA автоматически определяет INSERT/UPDATE
+    public Department update(Long id, Department department) {
+        // Проверяем, что департамент существует
+        Department existingDepartment = departmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Department not found with id: " + id));
+        
+        // Обновляем поля существующего департамента
+        existingDepartment.setName(department.getName());
+        if (department.getModerator() != null) {
+            existingDepartment.setModerator(department.getModerator());
+        }
+        
+        return departmentRepository.save(existingDepartment);
     }
 
 

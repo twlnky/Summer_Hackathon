@@ -68,22 +68,30 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        System.out.println("Начинаем создание тестовых данных...");
+        
         userRepository.deleteAll();
         departmentRepository.deleteAll();
         moderatorRepository.deleteAll();
 
-
+        System.out.println("Создаем модераторов...");
         List<Moderator> moderators = createModerators();
+        System.out.println("Создано модераторов: " + moderators.size());
         
+        System.out.println("Создаем департаменты...");
         List<Department> departments = createDepartments(moderators);
+        System.out.println("Создано департаментов: " + departments.size());
         
+        System.out.println("Создаем пользователей...");
         createUsers(departments, moderators);
+        System.out.println("Тестовые данные созданы успешно!");
     }
 
     private List<Moderator> createModerators() {
         List<Moderator> moderators = new ArrayList<>();
         
         int moderatorCount = faker.number().numberBetween(50, 71);
+        System.out.println("Планируем создать " + moderatorCount + " модераторов");
         
         for (int i = 0; i < moderatorCount; i++) {
             String firstName = faker.name().firstName();
@@ -93,13 +101,20 @@ public class DataSeeder implements CommandLineRunner {
             
             Moderator moderator = Moderator.builder()
                     .login(login)
-                    .password(passwordEncoder.encode("password123"))
+                    .password(passwordEncoder.encode("123"))
                     .firstName(firstName)
                     .lastName(lastName)
                     .middleName(middleName)
                     .build();
             
-            moderators.add(moderatorRepository.save(moderator));
+            moderator = moderatorRepository.save(moderator);
+            moderators.add(moderator);
+            
+            if (i < 5) { // Логируем первые 5 модераторов для проверки
+                System.out.println("Создан модератор: ID=" + moderator.getId() + 
+                                 ", Login=" + moderator.getLogin() + 
+                                 ", Name=" + moderator.getFirstName() + " " + moderator.getLastName());
+            }
         }
         
         return moderators;
@@ -108,7 +123,13 @@ public class DataSeeder implements CommandLineRunner {
     private List<Department> createDepartments(List<Moderator> moderators) {
         List<Department> departments = new ArrayList<>();
         
-        for (String departmentName : DEPARTMENTS) {
+        // Проверяем, что список модераторов не пустой
+        if (moderators.isEmpty()) {
+            throw new RuntimeException("Список модераторов пуст. Невозможно создать департаменты.");
+        }
+        
+        for (int i = 0; i < DEPARTMENTS.size(); i++) {
+            String departmentName = DEPARTMENTS.get(i);
             Moderator assignedModerator = moderators.get(faker.random().nextInt(moderators.size()));
             
             List<String> tags = generateDepartmentTags(departmentName);
@@ -119,7 +140,15 @@ public class DataSeeder implements CommandLineRunner {
                     .tags(tags)
                     .build();
             
-            departments.add(departmentRepository.save(department));
+            department = departmentRepository.save(department);
+            departments.add(department);
+            
+            if (i < 5) { // Логируем первые 5 департаментов для проверки
+                System.out.println("Создан департамент: ID=" + department.getId() + 
+                                 ", Name=" + department.getName() + 
+                                 ", Moderator ID=" + department.getModerator().getId() + 
+                                 ", Moderator Login=" + department.getModerator().getLogin());
+            }
         }
         
         return departments;
