@@ -10,6 +10,7 @@ public class SummerHackathonApplication {
     //TODO: SomeLogic
     public static void main(String[] args) {
         SpringApplication.run(SummerHackathonApplication.class, args);
+
     }
 
 }
