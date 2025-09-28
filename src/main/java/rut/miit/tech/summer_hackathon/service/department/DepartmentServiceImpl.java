@@ -1,15 +1,23 @@
 package rut.miit.tech.summer_hackathon.service.department;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rut.miit.tech.summer_hackathon.controller.department.DepartmentFilter;
 import rut.miit.tech.summer_hackathon.domain.model.Department;
+import rut.miit.tech.summer_hackathon.domain.model.Moderator;
 import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.repository.DepartmentRepository;
+import rut.miit.tech.summer_hackathon.repository.ModeratorRepository;
 import rut.miit.tech.summer_hackathon.repository.UserRepository;
+import rut.miit.tech.summer_hackathon.service.security.SecurityUtils;
 import rut.miit.tech.summer_hackathon.service.util.PageResult;
 
 import java.util.List;
@@ -22,6 +30,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
+    private final SecurityUtils securityUtils;
 
 
     @Override
@@ -42,10 +51,20 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public Department update(Long id, Department department) {
+
+
         // Проверяем, что департамент существует
         Department existingDepartment = departmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Department not found with id: " + id));
-        
+
+        if(SecurityUtils.isModerator()) {
+            
+            Long userId = securityUtils.getAuthenticatedModerator().getId();
+            if(!existingDepartment.getModerator().getId().equals(userId)){
+                throw new AccessDeniedException("Cannot edit other departments");
+            }
+        }
+
         // Обновляем поля существующего департамента
         existingDepartment.setName(department.getName());
         if (department.getModerator() != null) {

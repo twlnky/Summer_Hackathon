@@ -3,6 +3,7 @@ package rut.miit.tech.summer_hackathon.controller.moderator;
 import jakarta.persistence.criteria.*;
 import lombok.Data;
 import org.springframework.data.jpa.domain.Specification;
+import rut.miit.tech.summer_hackathon.controller.query.AbstractFilter;
 import rut.miit.tech.summer_hackathon.domain.model.Moderator;
 
 import java.util.ArrayList;
@@ -19,7 +20,9 @@ import java.util.List;
  * </p>
  */
 @Data  // Автоматически генерирует boilerplate-код (геттеры, сеттеры, equals, hashCode)
-public class ModeratorFilter implements Specification<Moderator> {
+public class ModeratorFilter
+        extends AbstractFilter
+        implements Specification<Moderator> {
     private String login;  // Поле для фильтрации по логину (частичное совпадение)
 
     /**
@@ -48,7 +51,7 @@ public class ModeratorFilter implements Specification<Moderator> {
             //   - cb.like() чувствителен к регистру - осознанное решение для логинов
             predicates.add(cb.like(root.get("login"), "%" + login + "%"));
         }
-
+        applyJoins(root);
         /**
          * Жадная загрузка связанных сущностей departments.
          *
@@ -61,9 +64,19 @@ public class ModeratorFilter implements Specification<Moderator> {
          * - JoinType.LEFT: чтобы включать модераторов без отделов
          * - fetch() влияет на форму результата, но не на условия WHERE
          */
-        root.fetch("departments", JoinType.LEFT);
+       // Class<?> queryType = query.getSelection().getJavaType();
+        //if(queryType != Long.class && queryType != Integer.class) {
+        //    root.fetch("departments", JoinType.LEFT);
+        //}
+
 
         // Комбинирование всех условий через AND
         return cb.and(predicates.toArray(new Predicate[0]));
+    }
+
+    public ModeratorFilter copy(){
+        ModeratorFilter moderatorFilter = new ModeratorFilter();
+        moderatorFilter.login = this.login;
+        return moderatorFilter;
     }
 }
