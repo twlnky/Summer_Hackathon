@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: SecurityRestAPI
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: ${MAIL_PROTOCOL}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLE}
+            required: ${MAIL_STARTTLS_REQUIRED}
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER}
+  jpa:
+    hibernate:
+      ddl-auto: ${HIBERNATE_DDL}
+    show-sql: ${SHOW_SQL}
+
+security:
+  jwt:
+    access:
+      secret: ${JWT_ACCESS_SECRET}
+      expires: ${JWT_ACCESS_EXPIRES}
