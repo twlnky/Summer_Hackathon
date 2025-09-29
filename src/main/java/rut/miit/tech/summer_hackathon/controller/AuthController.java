@@ -20,9 +20,15 @@ import rut.miit.tech.summer_hackathon.domain.exception.UnauthorizedException;
 import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.domain.util.DtoConverter;
 import rut.miit.tech.summer_hackathon.service.JwtService;
+import rut.miit.tech.summer_hackathon.service.security.RefreshTokenService;
+import rut.miit.tech.summer_hackathon.domain.model.RefreshToken;
+import rut.miit.tech.summer_hackathon.domain.model.User;
+import rut.miit.tech.summer_hackathon.repository.UserRepository;
 import rut.miit.tech.summer_hackathon.service.registration.RegistrationService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -33,6 +39,34 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final RegistrationService registrationService;
     private final DtoConverter dtoConverter;
+    private final RefreshTokenService refreshTokenService;
+    private final UserRepository userRepository;
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> payload) {
+        String refreshTokenValue = payload.get("refreshToken");
+        if (refreshTokenValue == null) {
+            return ResponseEntity.badRequest().body("Missing refresh token");
+        }
+        var refreshTokenOpt = refreshTokenService.findByToken(refreshTokenValue);
+        if (refreshTokenOpt.isEmpty() || refreshTokenService.isExpired(refreshTokenOpt.get())) {
+            return ResponseEntity.status(401).body("Invalid or expired refresh token");
+        }
+        RefreshToken refreshToken = refreshTokenOpt.get();
+        User user = userRepository.findById(refreshToken.getUserId())
+                .orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body("User not found");
+        }
+    String role = (user.getModerator() != null) ? "MODERATOR" : "USER";
+    String accessToken = jwtService.generateAccessToken(
+        org.springframework.security.core.userdetails.User
+            .withUsername(user.getEmail())
+            .password("")
+            .authorities(role)
+            .build()
+    );
+    return ResponseEntity.ok(Map.of("accessToken", accessToken));
+    }
 
 
     @GetMapping("/me")
@@ -58,24 +92,35 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JWTResponse> login(@RequestBody AuthDTO dto) {
+    public ResponseEntity<Map<String, String>> login(@RequestBody AuthDTO dto) {
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(dto.username(), dto.password());
 
         Authentication authentication = authenticationManager.authenticate(authToken);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String accessToken = jwtService.generateAccessToken(userDetails);
 
-        String accessToken = jwtService.generateAccessToken(
-                (UserDetails) authentication.getPrincipal());
+        // Получаем пользователя из базы по login
+    User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        String refreshTokenValue = null;
+        if (user != null && user.getId() != null) {
+            String deviceInfo = "";
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId(), deviceInfo);
+            refreshTokenValue = refreshToken.getToken();
+        }
 
-        return ResponseEntity.ok(new JWTResponse(accessToken));
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        if (refreshTokenValue != null) {
+            tokens.put("refreshToken", refreshTokenValue);
+        }
+        return ResponseEntity.ok(tokens);
     }
-
 
     @PostMapping("/registration")
     public UserDTO registration(
             @Validated @RequestBody RegisterDTO dto,
             BindingResult bindingResult) {
-
 
         if (bindingResult.hasErrors()) {
             throw new IllegalArgumentException("Invalid registration data");
