@@ -62,23 +62,20 @@ public class UserServiceImpl implements UserService {
             throw new AccessDeniedException("Cannot update user, because you're not legal moderator");
         }
         Moderator authenticatedModerator = securityUtils.getAuthenticatedModerator();
-        //Если текущий модератор - тот же модератор что и в базе данных
-        //То есть имеет полные права на обновление
+
         if (authenticatedModerator.getId().equals(beforeUpdateUser.getModerator().getId())) {
             //TODO: проверка на правильность обновление подразделений
             return userRepository.save(user);
         }
-        //Если редактирует не основной модератор - нужно проверить, корректность обновления
-        //Если есть попытка обновление основных атрибутов - отказываем
+
         if (!user.equals(beforeUpdateUser)) {
             throw new AccessDeniedException("Cannot update user attributes, because you're not main moderator");
         }
-        //Если есть попытка переназначить модератора
+
         if (!user.getModerator().getId().equals(beforeUpdateUser.getModerator().getId())) {
             throw new AccessDeniedException("Cannot update user's moderator, only admin has that permission");
         }
-        //Проверка на то, что изменены, только подразделения, управляемые модераторомм
-        //Если модератор задел связи с другими подразделениями - это нарушение прав
+
         if (!checkModeratorRelationsViolation(beforeUpdateUser,
                 user,
                 authenticatedModerator)) {
@@ -135,10 +132,10 @@ public class UserServiceImpl implements UserService {
         Specification<User> filter = ((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Поиск по текстовым полям - добавим вариант без LOWER для кириллицы
+
             String lowerRequest = request.toLowerCase();
 
-            // Поиск по именам и фамилиям - как с LOWER, так и без
+
             predicates.add(cb.like(cb.lower(root.get("firstName")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("firstName"), "%" + request + "%"));
             predicates.add(cb.like(cb.lower(root.get("lastName")), "%" + lowerRequest + "%"));
@@ -146,7 +143,7 @@ public class UserServiceImpl implements UserService {
             predicates.add(cb.like(cb.lower(root.get("middleName")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("middleName"), "%" + request + "%"));
 
-            // Email и другие поля
+
             predicates.add(cb.like(cb.lower(root.get("email")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("personalPhone"), "%" + request + "%"));
             predicates.add(cb.like(cb.lower(root.get("position")), "%" + lowerRequest + "%"));
@@ -154,12 +151,11 @@ public class UserServiceImpl implements UserService {
             predicates.add(cb.like(cb.lower(root.get("note")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("note"), "%" + request + "%"));
 
-            // Поиск по числовому полю officeNumber
+
             try {
                 Long officeNumberLong = Long.parseLong(request);
                 predicates.add(cb.equal(root.get("officeNumber"), officeNumberLong));
             } catch (NumberFormatException e) {
-                // Если запрос не является числом, просто игнорируем поиск по officeNumber
             }
 
             return cb.or(predicates.toArray(new Predicate[0]));

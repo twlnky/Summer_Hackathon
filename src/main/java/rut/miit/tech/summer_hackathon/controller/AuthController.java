@@ -50,7 +50,7 @@ public class AuthController {
                     .stream()
                     .map(SimpleGrantedAuthority::new)
                     .toList());
-            // Можно добавить другие поля, если нужно
+
             return ResponseEntity.ok(userInfo);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("User info not available");

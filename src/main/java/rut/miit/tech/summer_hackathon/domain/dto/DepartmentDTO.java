@@ -11,23 +11,23 @@ public record DepartmentDTO(
         String name,
 
         Long moderatorId,
-        
-        // Добавляем информацию о модераторе
+
+
         String moderatorLogin,
         String moderatorFirstName,
         String moderatorLastName,
         String moderatorMiddleName
 ) {
 
-        public Department toModel() {
-                return Department.builder()
-                        .id(id)
-                        .name(name)
-                        .moderator(
-                                moderatorId != null ?
-                                        Moderator.builder().id(moderatorId).build() :
-                                        null
-                        )
-                        .build();
-        }
+    public Department toModel() {
+        return Department.builder()
+                .id(id)
+                .name(name)
+                .moderator(
+                        moderatorId != null ?
+                                Moderator.builder().id(moderatorId).build() :
+                                null
+                )
+                .build();
+    }
 }

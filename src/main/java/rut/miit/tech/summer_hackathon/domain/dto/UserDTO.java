@@ -16,36 +16,36 @@ public record UserDTO(
         String personalPhone,
         String position,
         String note,
-        Long moderatorId, // Модератор теперь опциональный
+        Long moderatorId,
         String email,
         List<Long> departmentsIds
 ) {
 
-        public User toModel() {
-                // Создаем модератора только если moderatorId не null
-                Moderator moderator = null;
-                if (moderatorId != null) {
-                        moderator = Moderator.builder().id(moderatorId).build();
-                }
+    public User toModel() {
 
-                List<Department> departments = departmentsIds != null ?
-                        departmentsIds.stream()
-                                .map(id -> Department.builder().id(id).build())
-                                .toList() :
-                        Collections.emptyList();
-
-                return User.builder()
-                        .id(id)
-                        .firstName(firstName)
-                        .lastName(lastName)
-                        .middleName(middleName)
-                        .officeNumber(officeNumber)
-                        .personalPhone(personalPhone)
-                        .position(position)
-                        .note(note)
-                        .moderator(moderator) // Теперь может быть null
-                        .email(email)
-                        .departments(departments)
-                        .build();
+        Moderator moderator = null;
+        if (moderatorId != null) {
+            moderator = Moderator.builder().id(moderatorId).build();
         }
+
+        List<Department> departments = departmentsIds != null ?
+                departmentsIds.stream()
+                        .map(id -> Department.builder().id(id).build())
+                        .toList() :
+                Collections.emptyList();
+
+        return User.builder()
+                .id(id)
+                .firstName(firstName)
+                .lastName(lastName)
+                .middleName(middleName)
+                .officeNumber(officeNumber)
+                .personalPhone(personalPhone)
+                .position(position)
+                .note(note)
+                .moderator(moderator)
+                .email(email)
+                .departments(departments)
+                .build();
+    }
 }

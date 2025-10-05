@@ -45,9 +45,9 @@ public record ModeratorDTO(
                 id,
                 login,
                 password,
-                null, // firstName - устанавливаем null по умолчанию
-                null, // lastName - устанавливаем null по умолчанию
-                null, // middleName - устанавливаем null по умолчанию
+                null,
+                null,
+                null,
                 departments
         );
     }

@@ -8,9 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import rut.miit.tech.summer_hackathon.domain.model.Moderator;
-import rut.miit.tech.summer_hackathon.domain.model.User;
-
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -25,7 +22,7 @@ public class JwtService {
 
     public DecodedJWT decodeAccessToken(String token) {
         return JWT.require(Algorithm.HMAC256(accessSecret))
-                .withClaim("purpose","access")
+                .withClaim("purpose", "access")
                 .withIssuer("security-api")
                 .build().verify(token);
     }
@@ -34,10 +31,10 @@ public class JwtService {
         return JWT.create()
                 .withSubject(user.getUsername())
                 .withIssuer("security-api")
-                .withClaim("purpose","access")
+                .withClaim("purpose", "access")
                 .withIssuedAt(Timestamp.from(Instant.now()))
                 .withExpiresAt(Timestamp.from(Instant.now().plus(accessLifetime)))
-                .withArrayClaim("roles",user.getAuthorities()
+                .withArrayClaim("roles", user.getAuthorities()
                         .stream()
                         .map(Object::toString)
                         .toList()

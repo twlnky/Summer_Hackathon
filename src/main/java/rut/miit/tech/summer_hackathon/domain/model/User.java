@@ -28,19 +28,17 @@ import java.util.List;
         @Index(name = "idx_users_note", columnList = "note"),
         @Index(name = "idx_users_moderator_id", columnList = "moderator_id")
 })
+
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Exclude
     private Long id;
 
-    //    @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    //    @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    //@Column(name = "middle_name", nullable = false)
     private String middleName;
 
     @EqualsAndHashCode.Exclude
@@ -61,19 +59,10 @@ public class User {
     @Column(name = "office_number")
     private Long officeNumber;
 
-    //@Column(name = "business_phone", nullable = false)
     private String businessPhone;
-
-    //@Column(name = "personal_phone", nullable = false)
     private String personalPhone;
-
-    //@Column(nullable = false, unique = true)
     private String email;
-
-    //@Column(name = "user_position", nullable = false)
     private String position;
-
-    //@Column(nullable = false, columnDefinition = "TEXT")
     private String note;
 
     public UserDTO toDto() {
