@@ -9,6 +9,7 @@ import lombok.Setter;
 @Getter
 @RequiredArgsConstructor
 @Table
+//TODO: доделать Revoked токен + проверка Access токена на обновление
 //Токен для логаута, тчобы отслеживать
 public class RevokedToken {
     @Id
