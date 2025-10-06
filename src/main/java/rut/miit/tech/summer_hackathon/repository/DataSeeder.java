@@ -21,6 +21,7 @@ public class DataSeeder implements CommandLineRunner {
     private final DepartmentRepository departmentRepository;
     private final ModeratorRepository moderatorRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private final Faker faker = new Faker(new Locale("ru"));
     
@@ -69,7 +70,8 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         System.out.println("Начинаем создание тестовых данных...");
-        
+
+        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
         departmentRepository.deleteAll();
         moderatorRepository.deleteAll();
