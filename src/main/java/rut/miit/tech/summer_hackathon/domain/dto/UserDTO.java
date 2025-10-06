@@ -43,7 +43,7 @@ public record UserDTO(
                         .personalPhone(personalPhone)
                         .position(position)
                         .note(note)
-                        .moderator(moderator) // Теперь может быть null
+                        .moderator(moderator)
                         .email(email)
                         .departments(departments)
                         .build();
