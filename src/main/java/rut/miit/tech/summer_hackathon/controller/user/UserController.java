@@ -28,7 +28,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    //@PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
     public PageResult<UserDTO> getAllUsersPrivate(@ModelAttribute UserFilter userFilter,
                                                   @ModelAttribute PageParam pageParam,
                                                   @ModelAttribute SortParam sortParam){
