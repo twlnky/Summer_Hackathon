@@ -64,7 +64,6 @@ public class UserServiceImpl implements UserService {
         Moderator authenticatedModerator = securityUtils.getAuthenticatedModerator();
 
         if (authenticatedModerator.getId().equals(beforeUpdateUser.getModerator().getId())) {
-            //TODO: проверка на правильность обновление подразделений
             return userRepository.save(user);
         }
 
