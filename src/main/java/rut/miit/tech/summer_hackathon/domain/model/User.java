@@ -16,16 +16,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users", indexes = {
-        @Index(name = "idx_users_first_name", columnList = "first_name"),
-        @Index(name = "idx_users_last_name", columnList = "last_name"),
-        @Index(name = "idx_users_middle_name", columnList = "middle_name"),
-        @Index(name = "idx_users_office_number", columnList = "office_number"),
-        @Index(name = "idx_users_business_phone", columnList = "business_phone"),
-        @Index(name = "idx_users_personal_phone", columnList = "personal_phone"),
-        @Index(name = "idx_users_email", columnList = "email"),
-        @Index(name = "idx_users_position", columnList = "position"),
+        @Index(name = "idx_users_full_name", columnList = "last_name, first_name, middle_name"),
+        @Index(name = "idx_users_contacts", columnList = "email, business_phone, personal_phone"),
+        @Index(name = "idx_users_position_office", columnList = "position, office_number"),
         @Index(name = "idx_users_moderator_id", columnList = "moderator_id")
 })
+
 
 public class User {
     @Id
