@@ -16,9 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users", indexes = {
-        @Index(name = "idx_users_full_name", columnList = "last_name, first_name, middle_name"),
-        @Index(name = "idx_users_contacts", columnList = "email, business_phone, personal_phone"),
-        @Index(name = "idx_users_position_office", columnList = "position, office_number"),
+        @Index(name = "idx_card_info", columnList = "last_name, first_name, middle_name, email, business_phone, personal_phone, position, office_number, moderator_id"),
         @Index(name = "idx_users_moderator_id", columnList = "moderator_id")
 })
 
