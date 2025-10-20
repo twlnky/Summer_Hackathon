@@ -153,12 +153,17 @@ class UserControllerTest {
     @Test
     void getUserById_WhenUserNotFound_ShouldReturnNotFound() throws Exception {
         // Arrange
-        Mockito.when(userService.getById(999L)).thenThrow(new RuntimeException("User not found"));
+        Mockito.when(userService.getById(999L))
+                .thenThrow(new RuntimeException("User not found"));
 
-        // Act & Assert - меняем на 500, так как RuntimeException возвращает 500
+        // Act & Assert
         mockMvc.perform(get("/api/v1/users/public/999"))
-                .andExpect(status().isInternalServerError()); // было .isNotFound()
+                .andExpect(status().isNotFound())  // 404, т.к. handleNotFoundException обрабатывает RuntimeException
+                .andExpect(jsonPath("$.status").value("404"))
+                .andExpect(jsonPath("$.message").value("User not found"))
+                .andExpect(jsonPath("$.date").exists()); // проверяем, что дата присутствует
     }
+
 
     @Test
     void createUser_ShouldCreateUser() throws Exception {
