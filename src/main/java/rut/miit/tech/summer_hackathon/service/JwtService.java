@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import rut.miit.tech.summer_hackathon.repository.RevokedTokenRepository;
 import rut.miit.tech.summer_hackathon.repository.RefreshTokenRepository;
 import rut.miit.tech.summer_hackathon.domain.model.RefreshToken;
-import rut.miit.tech.summer_hackathon.domain.model.User;
 
 import java.sql.Timestamp;
 import java.time.Duration;
@@ -32,34 +31,59 @@ public class JwtService {
     @Value("${security.jwt.refresh.expires}")
     private Duration refreshLifetime;
 
-    @org.springframework.beans.factory.annotation.Autowired
-    private RevokedTokenRepository revokedTokenRepository;
-
-    @org.springframework.beans.factory.annotation.Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private final RevokedTokenRepository revokedTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public DecodedJWT decodeAccessToken(String token) {
-        return JWT.require(Algorithm.HMAC256(accessSecret))
-                .withClaim("purpose","access")
-                .withIssuer("security-api")
-                .build().verify(token);
+        try {
+            DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(accessSecret))
+                    .withClaim("purpose","access")
+                    .withIssuer("security-api")
+                    .build().verify(token);
+
+            // Проверка, не отозван ли access токен
+            if (isAccessTokenRevoked(decodedJWT.getId())) {
+                throw new RuntimeException("Access token revoked");
+            }
+
+            // Проверка, не отозван ли refresh-токен, на котором был создан этот access-токен
+            String refreshJti = decodedJWT.getClaim("refresh_jti").asString();
+            if (refreshJti != null) {
+                RefreshToken rt = refreshTokenRepository.findByJti(refreshJti)
+                        .orElseThrow(() -> new RuntimeException("Associated refresh token not found"));
+                if (rt.isRevoked()) {
+                    throw new RuntimeException("Access token based on revoked refresh token");
+                }
+            }
+
+            return decodedJWT;
+        } catch (com.auth0.jwt.exceptions.TokenExpiredException e) {
+            throw new RuntimeException("Access token expired");
+        }
     }
 
-    public String generateAccessToken(@NotNull UserDetails user) {
+    // Добавлен параметр refreshToken
+    public String generateAccessToken(@NotNull UserDetails user, String refreshToken) {
+        DecodedJWT decodedRefresh = JWT.decode(refreshToken);
+        String refreshJti = decodedRefresh.getId();
+
         return JWT.create()
                 .withSubject(user.getUsername())
                 .withIssuer("security-api")
                 .withClaim("purpose","access")
                 .withIssuedAt(Timestamp.from(Instant.now()))
                 .withExpiresAt(Timestamp.from(Instant.now().plus(accessLifetime)))
-                .withArrayClaim("roles",user.getAuthorities()
+                .withArrayClaim("roles", user.getAuthorities()
                         .stream()
                         .map(Object::toString)
                         .toList()
                         .toArray(new String[0]))
+                .withJWTId(UUID.randomUUID().toString())
+                .withClaim("refresh_jti", refreshJti) // <-- добавляем refresh_jti
                 .sign(Algorithm.HMAC256(accessSecret));
     }
-//генерация самого рефреша
+
+    //генерация самого рефреша
     public String generateRefreshToken(@NotNull UserDetails user) {
         return JWT.create()
                 .withSubject(user.getUsername())
@@ -71,28 +95,51 @@ public class JwtService {
                 .withJWTId(UUID.randomUUID().toString())
                 .sign(Algorithm.HMAC256(refreshSecret));
     }
-//Декодирование рефреша, чтобы проверить его
+
+    //Декодирование рефреша, чтобы проверить его
     public DecodedJWT decodeRefreshToken(String token) {
-        return JWT.require(Algorithm.HMAC256(refreshSecret))
-                .withClaim("purpose", "refresh")
-                .withIssuer("security-api")
-                .build().verify(token);
+        try {
+            DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(refreshSecret))
+                    .withClaim("purpose", "refresh")
+                    .withIssuer("security-api")
+                    .build().verify(token);
+
+            // Дополнительная проверка в базе данных
+            String jti = decodedJWT.getId();
+            RefreshToken stored = refreshTokenRepository.findByJti(jti)
+                    .orElseThrow(() -> new RuntimeException("Refresh token not found"));
+
+            if (stored.isRevoked()) {
+                throw new RuntimeException("Refresh token revoked");
+            }
+
+            if (stored.getExpiresAt().isBefore(Instant.now())) {
+                throw new RuntimeException("Refresh token expired");
+            }
+
+            return decodedJWT;
+        } catch (com.auth0.jwt.exceptions.TokenExpiredException e) {
+            throw new RuntimeException("Refresh token expired");
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid refresh token");
+        }
     }
-//Это создание нового аксесса, если рефреш существует и он не ревокнут
+
+    //Это создание нового аксесса, если рефреш существует и он не ревокнут
     public String createAccess(@NotNull DecodedJWT refreshToken) {
         String jti = refreshToken.getId();
         //Проверка на то, что он существует
         RefreshToken stored = refreshTokenRepository.findByJti(jti)
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
-//Проверка, чтобы токен существовал, но не был реворкнут
+        //Проверка, чтобы токен существовал, но не был реворкнут
         if (stored.isRevoked()) {
             throw new RuntimeException("Refresh token revoked");
         }
-//Проверка, что время токена не вышло
+        //Проверка, что время токена не вышло
         if (stored.getExpiresAt().isBefore(Instant.now())) {
             throw new RuntimeException("Refresh token expired");
         }
-//Все проверки прошли? Значит генерим новый аксессве токен
+        //Все проверки прошли? Значит генерим новый аксесс токен
         return JWT.create()
                 .withSubject(refreshToken.getSubject())
                 .withIssuer("security-api")
@@ -100,6 +147,12 @@ public class JwtService {
                 .withIssuedAt(Timestamp.from(Instant.now()))
                 .withExpiresAt(Timestamp.from(Instant.now().plus(accessLifetime)))
                 .withArrayClaim("roles", refreshToken.getClaim("roles").asArray(String.class))
+                .withClaim("refresh_jti", jti) // <-- тоже добавляем refresh_jti
                 .sign(Algorithm.HMAC256(accessSecret));
+    }
+
+    public boolean isAccessTokenRevoked(String jti) {
+        if (jti == null) return false;
+        return revokedTokenRepository.findByToken(jti).isPresent();
     }
 }
