@@ -51,9 +51,6 @@ public class JwtService {
             if (refreshJti != null) {
                 RefreshToken rt = refreshTokenRepository.findByJti(refreshJti)
                         .orElseThrow(() -> new RuntimeException("Associated refresh token not found"));
-                if (rt.isRevoked()) {
-                    throw new RuntimeException("Access token based on revoked refresh token");
-                }
             }
 
             return decodedJWT;
@@ -109,9 +106,6 @@ public class JwtService {
             RefreshToken stored = refreshTokenRepository.findByJti(jti)
                     .orElseThrow(() -> new RuntimeException("Refresh token not found"));
 
-            if (stored.isRevoked()) {
-                throw new RuntimeException("Refresh token revoked");
-            }
 
             if (stored.getExpiresAt().isBefore(Instant.now())) {
                 throw new RuntimeException("Refresh token expired");
@@ -132,9 +126,6 @@ public class JwtService {
         RefreshToken stored = refreshTokenRepository.findByJti(jti)
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
         //Проверка, чтобы токен существовал, но не был реворкнут
-        if (stored.isRevoked()) {
-            throw new RuntimeException("Refresh token revoked");
-        }
         //Проверка, что время токена не вышло
         if (stored.getExpiresAt().isBefore(Instant.now())) {
             throw new RuntimeException("Refresh token expired");

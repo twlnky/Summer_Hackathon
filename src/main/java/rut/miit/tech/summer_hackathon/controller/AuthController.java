@@ -112,7 +112,8 @@ public class AuthController {
 
             Instant expires = decoded.getExpiresAt() != null
                     ? decoded.getExpiresAt().toInstant()
-                    : Instant.now().plus(Duration.ofDays(30)); // используй refreshLifetime
+                    //Проверка не истек ли срок годности
+                    : Instant.now().plus(Duration.ofDays(30));
 
             User user = userRepository.findByEmail(dto.username()).orElse(null);
 
@@ -138,7 +139,6 @@ public class AuthController {
                     .user(user)
                     .issuedAt(issued)
                     .expiresAt(expires)
-                    .revoked(false)
                     .build();
 
             refreshTokenRepository.save(rt);
@@ -161,13 +161,10 @@ public class AuthController {
                 .body(new JWTResponse(accessToken));
     }
 
-    //Пробегаемся по куке и если имя совпало, то реврешим
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         try {
-            log.info("=== START LOGOUT ===");
 
-            // 1) Попытка получить refresh-token из cookie
             Cookie[] cookies = request.getCookies();
             String refreshTokenValue = null;
             if (cookies != null) {
@@ -178,54 +175,31 @@ public class AuthController {
                     }
                 }
             }
-            log.info("Refresh token from cookie: {}", refreshTokenValue); // ✅ Исправлено
 
-            // 2) Если нашли refresh-token — ищем в БД по полному токену
             if (refreshTokenValue != null && !refreshTokenValue.isBlank()) {
                 try {
                     Optional<RefreshToken> optionalRt = refreshTokenRepository.findByToken(refreshTokenValue);
                     if (optionalRt.isPresent()) {
                         RefreshToken rt = optionalRt.get();
-                        if (!rt.isRevoked()) {
-                            rt.setRevoked(true);
-                            refreshTokenRepository.save(rt);
-                            log.info("✅ Refresh token revoked in DB (by token), id={}", rt.getId()); // ✅ Исправлено
-                        } else {
-                            log.info("ℹ️ Refresh token already revoked (by token)");
-                        }
+                        //Не ревокаю, а прост удаляю
+                        refreshTokenRepository.delete(rt);
                     } else {
-                        // Не нашли по полному токену — попробуем декодировать и найти по jti
                         try {
                             DecodedJWT decoded = JWT.decode(refreshTokenValue);
                             String jti = decoded.getId();
-                            log.info("JTI from refresh token: {}", jti); // ✅ Исправлено
                             if (jti != null) {
                                 Optional<RefreshToken> tokenByJti = refreshTokenRepository.findByJti(jti);
                                 if (tokenByJti.isPresent()) {
                                     RefreshToken rt = tokenByJti.get();
-                                    if (!rt.isRevoked()) {
-                                        rt.setRevoked(true);
-                                        refreshTokenRepository.save(rt);
-                                        log.info("✅ Refresh token revoked in DB (by jti), id={}", rt.getId()); // ✅ Исправлено
-                                    } else {
-                                        log.info("ℹ️ Refresh token already revoked (by jti)");
-                                    }
-                                } else {
-                                    log.warn("❌ Refresh token not found by jti either");
+                                    //Тут тоже самое
+                                    refreshTokenRepository.delete(rt);
                                 }
                             }
-                        } catch (Exception e) {
-                            log.error("Cannot decode refresh token for jti: {}", e.getMessage()); // ✅ Исправлено
-                        }
+                        } catch (Exception e) {}
                     }
-                } catch (Exception e) {
-                    log.error("Error while processing refresh token in DB: {}", e.getMessage()); // ✅ Исправлено
-                }
-            } else {
-                log.info("No refresh-token cookie provided in request");
+                } catch (Exception e) {}
             }
 
-            // 3) Попытка ревока access token из заголовка Authorization (по jti)
             try {
                 String authHeader = request.getHeader("Authorization");
                 if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -239,35 +213,21 @@ public class AuthController {
                             revoked.setTokenType("access");
                             revoked.setRevokedAt(Instant.now());
                             revokedTokenRepository.save(revoked);
-                            log.info("✅ Access token revoked with jti: {}", jti); // ✅ Исправлено
-                        } else {
-                            log.info("Access token has no jti — can't revoke by jti");
                         }
-                    } catch (Exception ex) {
-                        log.error("Cannot decode access token for jti: {}", ex.getMessage()); // ✅ Исправлено
-                    }
-                } else {
-                    log.debug("No Authorization header present to revoke access token");
-                }
-            } catch (Exception e) {
-                log.error("Error while revoking access token: {}", e.getMessage()); // ✅ Исправлено
-            }
-
-            // 4) Очистить cookie refresh-token на клиенте
+                    } catch (Exception ex) {}
+                } else {}
+            } catch (Exception e) {}
+            //Я не особо понял про безопасность, сказано что это плохая практика, но без этого не работает
             ResponseCookie deleteCookie = ResponseCookie.from("refresh-token", "")
                     .httpOnly(true)
-                    .secure(false) // false для локального теста, true в проде
+                    .secure(false)
                     .path("/")
                     .maxAge(0)
                     .build();
-            response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString()); // ✅ Использовать addHeader
-            log.info("✅ Cookie cleared");
-
-            log.info("=== END LOGOUT ===");
+            response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
             return ResponseEntity.ok().body(Map.of("message", "Logged out successfully"));
 
         } catch (Exception e) {
-            log.error("❌ LOGOUT ERROR: {}", e.getMessage()); // ✅ Исправлено
             return ResponseEntity.status(500).body(Map.of("error", "Logout failed"));
         }
     }
@@ -315,7 +275,8 @@ public class AuthController {
 
         try {
             Optional<RefreshToken> optionalRt = refreshTokenRepository.findByToken(refreshTokenValue);
-            if (optionalRt.isEmpty() || optionalRt.get().isRevoked()) {
+            //Я его теперь удаляю, поэтому проверка на пустоту
+            if (optionalRt.isEmpty()) {
                 return ResponseEntity.status(401).body(Map.of("message", "Refresh token revoked or invalid"));
             }
 
