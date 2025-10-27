@@ -1,11 +1,13 @@
 package rut.miit.tech.summer_hackathon.controller;
 
+import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +23,7 @@ import rut.miit.tech.summer_hackathon.domain.dto.RegisterDTO;
 import rut.miit.tech.summer_hackathon.domain.dto.UserDTO;
 import rut.miit.tech.summer_hackathon.domain.exception.UnauthorizedException;
 import rut.miit.tech.summer_hackathon.domain.model.Moderator;
+import rut.miit.tech.summer_hackathon.domain.model.RevokedToken;
 import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.domain.model.RefreshToken;
 import rut.miit.tech.summer_hackathon.domain.util.DtoConverter;
@@ -32,15 +35,13 @@ import rut.miit.tech.summer_hackathon.repository.UserRepository;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-
 public class AuthController {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -51,42 +52,58 @@ public class AuthController {
     private final UserRepository userRepository;
     private final ModeratorRepository moderatorRepository;
 
-
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUse(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         String token = authHeader != null ? authHeader.substring(7) : null;
         if (token == null) {
-            throw new UnauthorizedException("Missing authorization header");
+            return ResponseEntity.status(401).body(Map.of("message", "Missing authorization header"));
         }
         try {
             DecodedJWT decodedJWT = jwtService.decodeAccessToken(token);
+            String username = decodedJWT.getSubject();
+            User user = userRepository.findByEmail(username).orElse(null);
+            if (user == null) {
+                Moderator mod = moderatorRepository.findByLogin(username).orElse(null);
+                if (mod != null) {
+                    user = userRepository.findById(mod.getId()).orElse(null);
+                }
+            }
+            if (user == null) {
+                return ResponseEntity.status(404).body(Map.of("message", "User not found"));
+            }
+
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("username", decodedJWT.getSubject());
             userInfo.put("authorities", decodedJWT.getClaim("roles").asList(String.class)
                     .stream()
                     .map(SimpleGrantedAuthority::new)
                     .toList());
-            // Можно добавить другие поля, если нужно
+            userInfo.put("firstName", user.getFirstName());
+            userInfo.put("lastName", user.getLastName());
+            userInfo.put("middleName", user.getMiddleName());
+            userInfo.put("email", user.getEmail());
+            userInfo.put("moderatorId", user.getModerator() != null ? user.getModerator().getId() : null);
+
             return ResponseEntity.ok(userInfo);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("User info not available");
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid token"));
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JWTResponse> login(@RequestBody AuthDTO dto) {
+    public ResponseEntity<JWTResponse> login(@RequestBody AuthDTO dto, HttpServletResponse response) {
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(dto.username(), dto.password());
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
-        String accessToken = jwtService.generateAccessToken(
-                (UserDetails) authentication.getPrincipal());
-
         String refreshToken = jwtService.generateRefreshToken((UserDetails) authentication.getPrincipal());
 
+        String accessToken = jwtService.generateAccessToken(
+                (UserDetails) authentication.getPrincipal(), refreshToken);
+
         try {
-            DecodedJWT decoded = jwtService.decodeRefreshToken(refreshToken);
+            DecodedJWT decoded = JWT.decode(refreshToken);
             String jti = decoded.getId();
 
             Instant issued = decoded.getIssuedAt() != null
@@ -95,6 +112,7 @@ public class AuthController {
 
             Instant expires = decoded.getExpiresAt() != null
                     ? decoded.getExpiresAt().toInstant()
+                    //Проверка не истек ли срок годности
                     : Instant.now().plus(Duration.ofDays(30));
 
             User user = userRepository.findByEmail(dto.username()).orElse(null);
@@ -103,18 +121,15 @@ public class AuthController {
                 Moderator moderator = moderatorRepository.findByLogin(dto.username())
                         .orElseThrow(() -> new RuntimeException("Moderator not found"));
 
-                // Ищем User по ID модератора
                 user = userRepository.findById(moderator.getId()).orElse(null);
                 if (user == null) {
-
                     user = new User();
                     user.setFirstName(moderator.getFirstName());
                     user.setLastName(moderator.getLastName());
                     user.setMiddleName(moderator.getMiddleName());
                     user.setEmail(moderator.getLogin());
                     user.setModerator(moderator);
-
-                    user = userRepository.save(user); // Сохраняем нового пользователя
+                    user = userRepository.save(user);
                 }
             }
 
@@ -124,88 +139,103 @@ public class AuthController {
                     .user(user)
                     .issuedAt(issued)
                     .expiresAt(expires)
-                    .revoked(false)
                     .build();
 
             refreshTokenRepository.save(rt);
-            System.out.println(" Refresh token saved");
 
         } catch (Exception ex) {
-            ex.printStackTrace();
-            System.out.println("!!!!!!!НИЧЕГО НЕ СОХРАНИЛОСЬ");
+            log.error("Error saving refresh token", ex);
         }
 
-        Cookie cookie = new Cookie("refresh-token", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) Duration.ofDays(30).getSeconds());
+        boolean secureForLocal = false;
+        ResponseCookie cookie = ResponseCookie.from("refresh-token", refreshToken)
+                .httpOnly(true)
+                .secure(secureForLocal)
+                .path("/")
+                .maxAge(Duration.ofDays(30))
+                .sameSite("Lax")
+                .build();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new JWTResponse(accessToken));
     }
 
-
-
-    //Пробегаемся по куке и если имя совпало, то реврешим
-    @GetMapping("/refresh")
-    public ResponseEntity<JWTResponse> refresh(HttpServletRequest request) {
-        String refreshToken = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if ("refresh-token".equals(c.getName())) {
-                    refreshToken = c.getValue();
-                    break;
-                }
-            }
-        }
-        if (refreshToken == null) {
-            throw new RuntimeException("refresh token not found in cookie");
-        }
-    com.auth0.jwt.interfaces.DecodedJWT decodedRefreshToken = jwtService.decodeRefreshToken(refreshToken);
-        String newAccessToken = jwtService.createAccess(decodedRefreshToken);
-        return ResponseEntity.ok(new JWTResponse(newAccessToken));
-    }
-
     @PostMapping("/logout")
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if ("refresh-token".equals(c.getName())) {
-                    String value = c.getValue();
-                    try {
-                        com.auth0.jwt.interfaces.DecodedJWT decoded = jwtService.decodeRefreshToken(value);
-                        String jti = decoded.getId();
-                        refreshTokenRepository.findByJti(jti).ifPresent(rt -> {
-                            rt.setRevoked(true);
-                            refreshTokenRepository.save(rt);
-                        });
-                    } catch (Exception ex) {
-                        rut.miit.tech.summer_hackathon.domain.model.RevokedToken revokedToken = new rut.miit.tech.summer_hackathon.domain.model.RevokedToken();
-                        revokedToken.setToken(value);
-                        revokedTokenRepository.save(revokedToken);
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        try {
+
+            Cookie[] cookies = request.getCookies();
+            String refreshTokenValue = null;
+            if (cookies != null) {
+                for (Cookie c : cookies) {
+                    if ("refresh-token".equals(c.getName())) {
+                        refreshTokenValue = c.getValue();
+                        break;
                     }
-                    break;
                 }
             }
-        }
-        Cookie revokeCookie = new Cookie("refresh-token", "");
-        revokeCookie.setPath("/");
-        revokeCookie.setHttpOnly(true);
-        revokeCookie.setSecure(true);
-        revokeCookie.setMaxAge(0);           // удаление куки
-        response.addCookie(revokeCookie);
-    }
 
+            if (refreshTokenValue != null && !refreshTokenValue.isBlank()) {
+                try {
+                    Optional<RefreshToken> optionalRt = refreshTokenRepository.findByToken(refreshTokenValue);
+                    if (optionalRt.isPresent()) {
+                        RefreshToken rt = optionalRt.get();
+                        //Не ревокаю, а прост удаляю
+                        refreshTokenRepository.delete(rt);
+                    } else {
+                        try {
+                            DecodedJWT decoded = JWT.decode(refreshTokenValue);
+                            String jti = decoded.getId();
+                            if (jti != null) {
+                                Optional<RefreshToken> tokenByJti = refreshTokenRepository.findByJti(jti);
+                                if (tokenByJti.isPresent()) {
+                                    RefreshToken rt = tokenByJti.get();
+                                    //Тут тоже самое
+                                    refreshTokenRepository.delete(rt);
+                                }
+                            }
+                        } catch (Exception e) {}
+                    }
+                } catch (Exception e) {}
+            }
+
+            try {
+                String authHeader = request.getHeader("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    String accessToken = authHeader.substring(7);
+                    try {
+                        DecodedJWT decoded = JWT.decode(accessToken);
+                        String jti = decoded.getId();
+                        if (jti != null) {
+                            rut.miit.tech.summer_hackathon.domain.model.RevokedToken revoked = new rut.miit.tech.summer_hackathon.domain.model.RevokedToken();
+                            revoked.setToken(jti);
+                            revoked.setTokenType("access");
+                            revoked.setRevokedAt(Instant.now());
+                            revokedTokenRepository.save(revoked);
+                        }
+                    } catch (Exception ex) {}
+                } else {}
+            } catch (Exception e) {}
+            //Я не особо понял про безопасность, сказано что это плохая практика, но без этого не работает
+            ResponseCookie deleteCookie = ResponseCookie.from("refresh-token", "")
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(0)
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+            return ResponseEntity.ok().body(Map.of("message", "Logged out successfully"));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Logout failed"));
+        }
+    }
 
     @PostMapping("/registration")
     public UserDTO registration(
             @Validated @RequestBody RegisterDTO dto,
             BindingResult bindingResult) {
-
 
         if (bindingResult.hasErrors()) {
             throw new IllegalArgumentException("Invalid registration data");
@@ -214,15 +244,54 @@ public class AuthController {
         User registeredUser = registrationService.register(dto);
         return dtoConverter.toDto(registeredUser, UserDTO.class);
     }
+
     private User convertModeratorToUser(Moderator moderator) {
         User user = new User();
         user.setId(moderator.getId());
         user.setFirstName(moderator.getFirstName());
         user.setLastName(moderator.getLastName());
         user.setMiddleName(moderator.getMiddleName());
-        user.setEmail(moderator.getLogin()); // логин модератора
-        user.setModerator(moderator); // важная пометка, что это модератор
+        user.setEmail(moderator.getLogin());
+        user.setModerator(moderator);
         return user;
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response) {
+        String refreshTokenValue = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("refresh-token".equals(c.getName())) {
+                    refreshTokenValue = c.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (refreshTokenValue == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "Refresh token not provided"));
+        }
+
+        try {
+            Optional<RefreshToken> optionalRt = refreshTokenRepository.findByToken(refreshTokenValue);
+            //Я его теперь удаляю, поэтому проверка на пустоту
+            if (optionalRt.isEmpty()) {
+                return ResponseEntity.status(401).body(Map.of("message", "Refresh token revoked or invalid"));
+            }
+
+            RefreshToken rt = optionalRt.get();
+            if (rt.getExpiresAt().isBefore(Instant.now())) {
+                refreshTokenRepository.delete(rt);
+                return ResponseEntity.status(401).body(Map.of("message", "Refresh token expired"));
+            }
+
+            DecodedJWT decoded = JWT.decode(refreshTokenValue);
+            String newAccess = jwtService.createAccess(decoded);
+
+            return ResponseEntity.ok(Map.of("accessToken", newAccess));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
+        }
+    }
 }

@@ -29,9 +29,7 @@ public class RefreshToken {
     @Column(name = "jti", nullable = false, columnDefinition = "TEXT")
     private String jti;
 
-    @Column(name = "revoked", nullable = false)
-    private boolean revoked;
-
+    //Удалили ревокед, потмчт он больше не нужен
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_refresh_user",

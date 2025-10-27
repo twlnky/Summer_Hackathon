@@ -53,11 +53,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
             DecodedJWT jwt = jwtService.decodeAccessToken(token);
 
+            String subject = jwt.getSubject();
 
             var authentication = new UsernamePasswordAuthenticationToken(
                     jwt.getSubject(),
                     null,
-
                     jwt.getClaim("roles").asList(String.class)
                             .stream()
                             .map(SimpleGrantedAuthority::new)
@@ -65,9 +65,7 @@ public class JwtFilter extends OncePerRequestFilter {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
             filterChain.doFilter(request, response);
-
 
         } catch (Exception e) {
             log.error("JWT processing error: {}", e.getMessage());
