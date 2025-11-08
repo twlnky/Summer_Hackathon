@@ -33,11 +33,5 @@ build/
 ### VS Code ###
 .vscode/
 .env
-pom.xml
-
-/src/main/resources/application.yml
-/src/main/resources/login-success-dto-schema.json
-.gitignore
-
 
 .DS_Store

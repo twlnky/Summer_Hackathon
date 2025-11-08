@@ -3,19 +3,16 @@ package rut.miit.tech.summer_hackathon.service.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import rut.miit.tech.summer_hackathon.domain.exception.ResourceNotFoundException;
 import rut.miit.tech.summer_hackathon.domain.model.Moderator;
-import rut.miit.tech.summer_hackathon.repository.ModeratorRepository;
 import rut.miit.tech.summer_hackathon.service.moderator.ModeratorService;
 
 @Component
 @RequiredArgsConstructor
 public class SecurityUtils {
-    private final ModeratorRepository repository;
+    private final ModeratorService moderatorService;
 
-    public static boolean isAdmin(){
+    public static boolean isAdmin() {
         return SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getAuthorities()
@@ -25,7 +22,7 @@ public class SecurityUtils {
                 .contains("ADMIN");
     }
 
-    public static boolean isModerator(){
+    public static boolean isModerator() {
         return SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getAuthorities()
@@ -35,18 +32,22 @@ public class SecurityUtils {
                 .contains("MODERATOR");
     }
 
+
+
+
+
     public static void checkIsAdmin() throws AccessDeniedException {
-        if(!isAdmin()){
+        if (!isAdmin()) {
             throw new AccessDeniedException("ADMIN role is required for this action");
         }
     }
 
-    public Moderator getAuthenticatedModerator(){
-        if(!isModerator()){
+    public Moderator getAuthenticatedModerator() {
+        if (!isModerator()) {
             throw new IllegalStateException("Current authenticated user is not MODERATOR");
         }
-        String login = (String)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return repository.findByLogin(login).orElseThrow(() -> new ResourceNotFoundException("No moder with login: " +  login));
+        String login = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return moderatorService.getByLogin(login);
     }
 
 }

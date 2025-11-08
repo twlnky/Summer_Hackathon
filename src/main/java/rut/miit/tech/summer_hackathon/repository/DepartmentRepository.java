@@ -1,10 +1,10 @@
 package rut.miit.tech.summer_hackathon.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository; // Базовый интерфейс CRUD-операций
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor; // Для спецификаций/динамических запросов
-import org.springframework.stereotype.Repository; // Помечает интерфейс как репозиторий
-import rut.miit.tech.summer_hackathon.domain.model.Department; // Сущность департамента
-import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+import rut.miit.tech.summer_hackathon.domain.model.Department;
+
 import java.util.Optional;
 
 @Repository
@@ -15,5 +15,4 @@ public interface DepartmentRepository
 
     Optional<Department> findByName(String name);
 
-    List<Department> findAllByUsersId(Long userId);
 }

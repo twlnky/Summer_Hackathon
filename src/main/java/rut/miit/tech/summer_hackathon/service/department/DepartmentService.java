@@ -1,9 +1,9 @@
 package rut.miit.tech.summer_hackathon.service.department;
 
-import org.springframework.data.domain.Pageable; // Интерфейс пагинации
-import org.springframework.data.jpa.domain.Specification; // Фильтрация через спецификации
-import rut.miit.tech.summer_hackathon.domain.model.Department; // Сущность департамента
-import rut.miit.tech.summer_hackathon.service.util.PageResult; // Кастомный класс пагинации
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import rut.miit.tech.summer_hackathon.domain.model.Department;
+import rut.miit.tech.summer_hackathon.service.util.PageResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,22 +11,22 @@ import java.util.Optional;
 
 public interface DepartmentService {
 
-    //done
+
     Department getById(Long id);
 
 
-     Optional<Department> getByName(String name);
+    Optional<Department> getByName(String name);
 
-    // я так понимаю не надо его реализовывать
+
     List<Department> saveAll(List<Department> departments);
 
-    // done
+
     PageResult<Department> getAll(Specification<Department> filter, Pageable pageable);
 
-    // я так понимаю не надо его реализовывать
+
     List<Department> getAllByIds(List<Long> ids);
 
-    //done
+
     Department save(Department department);
 
 
@@ -49,9 +49,9 @@ public interface DepartmentService {
 
     PageResult<Department> getAllByRequest(String request, Pageable pageable);
 
-    // Добавить пользователя в департамент
+
     void addUserToDepartment(Long departmentId, Long userId);
 
-    // Удалить пользователя из департамента
+
     void removeUserFromDepartment(Long departmentId, Long userId);
 }

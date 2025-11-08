@@ -2,7 +2,6 @@ package rut.miit.tech.summer_hackathon.service.moderator;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import rut.miit.tech.summer_hackathon.controller.moderator.ModeratorFilter;
 import rut.miit.tech.summer_hackathon.domain.model.Moderator;
 import rut.miit.tech.summer_hackathon.service.util.PageResult;
 
@@ -22,7 +21,7 @@ public interface ModeratorService {
     Moderator update(Moderator moderator);
 
 
-    PageResult<Moderator> getAll(ModeratorFilter filter, Pageable pageable);
+    PageResult<Moderator> getAll(Specification<Moderator> filter, Pageable pageable);
 
 
     Moderator getByLogin(String username);

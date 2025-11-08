@@ -2,7 +2,6 @@ package rut.miit.tech.summer_hackathon.controller.user;
 
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
-import rut.miit.tech.summer_hackathon.domain.model.Department;
 import rut.miit.tech.summer_hackathon.domain.model.User;
 
 import java.util.ArrayList;
@@ -16,8 +15,8 @@ public class UserFilter implements Specification<User> {
     @Override
     public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
         List<String> searchTerms = new ArrayList<>();
-        
-        // Собираем все непустые поисковые термы
+
+
         if (firstName != null && !firstName.trim().isEmpty()) {
             searchTerms.add(firstName.trim());
         }
@@ -34,7 +33,7 @@ public class UserFilter implements Specification<User> {
 
         List<Predicate> predicates = new ArrayList<>();
 
-        // Для каждого поискового терма создаем предикат поиска по всем полям
+
         for (String term : searchTerms) {
             if (!term.isEmpty()) {
                 String searchTerm = "%" + term.toLowerCase() + "%";
@@ -59,22 +58,22 @@ public class UserFilter implements Specification<User> {
                 Expression<String> fieldLower = cb.lower(root.get(field));
                 termPredicates.add(cb.like(fieldLower, searchTerm));
             } catch (Exception e) {
-                // Игнорируем поля, которые могут быть null или недоступны
+
             }
         }
 
-        // Также ищем по номеру кабинета как строке
+
         try {
             Expression<String> officeNumberStr = cb.toString(root.get("officeNumber"));
             termPredicates.add(cb.like(officeNumberStr, searchTerm.replace("%", "")));
         } catch (Exception e) {
-            // Игнорируем если поле недоступно
+
         }
 
         return cb.or(termPredicates.toArray(new Predicate[0]));
     }
 
-    // Геттеры и сеттеры для Spring автоматического связывания параметров
+
     public String getFirstName() {
         return firstName;
     }

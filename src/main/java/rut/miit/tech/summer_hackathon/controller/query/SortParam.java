@@ -1,10 +1,11 @@
 package rut.miit.tech.summer_hackathon.controller.query;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;  // Автоматическая генерация геттеров/сеттеров
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.domain.Sort;  // Основной класс для сортировки в Spring Data
-import java.util.ArrayList;  // Для работы со списками
+import org.springframework.data.domain.Sort;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,47 +18,29 @@ public class SortParam {
     private List<String> sort = new ArrayList<>();
 
 
-
-
-
     public Sort sort() {
 
         List<Sort.Order> orders = new ArrayList<>();
 
-        // Обработка каждого параметра сортировки
-        sort.forEach(s -> {
-            /*
-             * Разбиение строки на части по двоеточию с лимитом 2:
-             * - Решение: split(":", 2) гарантирует 2 части максимум
-             * - Почему? Защита от значений с дополнительными ":"
-             * - Пример: "user:profile:asc" → ["user", "profile:asc"] недопустимо
-             */
-            String[] parts = s.split(":", 2);  // Критически важный лимит
 
-            // Извлечение имени поля (обязательная часть)
+        sort.forEach(s -> {
+
+            String[] parts = s.split(":", 2);
+
+
             String field = parts[0];
 
-            /*
-             * Обработка направления сортировки:
-             * - По умолчанию: DESC (осознанное решение для безопасности)
-             * - Если указан asc - сортировка по возрастанию
-             * - Любое другое значение → DESC
-             */
-            String order = (parts.length > 1) ? parts[1] : "desc";  // Защита от отсутствия направления
 
-            /*
-             * Создание объекта Order:
-             * - Objects.equals() вместо == для корректного сравнения строк
-             * - Явное указание направления улучшает читаемость
-             */
+            String order = (parts.length > 1) ? parts[1] : "desc";
+
             orders.add(
-                    Objects.equals(order, "asc") ?  // Безопасное сравнение
-                            Sort.Order.asc(field) :         // Восходящая сортировка
-                            Sort.Order.desc(field)           // Нисходящая сортировка (по умолчанию)
+                    Objects.equals(order, "asc") ?
+                            Sort.Order.asc(field) :
+                            Sort.Order.desc(field)
             );
         });
 
-        // Сборка финального объекта Sort
+
         return Sort.by(orders);
     }
 }
