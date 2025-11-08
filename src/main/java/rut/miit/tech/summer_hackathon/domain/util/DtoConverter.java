@@ -19,11 +19,11 @@ public class DtoConverter {
 
     public <M, D> List<D> toDto(List<M> models, Class<D> destination) {
         return models.stream()
-                .map(o -> modelMapper.map(o, destination)) // Маппинг каждого элемента
-                .toList(); // Сбор в список (Java 16+ неизменяемый)
+                .map(o -> modelMapper.map(o, destination))
+                .toList();
     }
 
     public <M, D> M toModel(D dto, Class<M> destination) {
-        return modelMapper.map(dto, destination); // Прямой вызов
+        return modelMapper.map(dto, destination);
     }
 }

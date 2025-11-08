@@ -3,9 +3,9 @@ package rut.miit.tech.summer_hackathon.service.moderator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import rut.miit.tech.summer_hackathon.controller.moderator.ModeratorFilter;
 import rut.miit.tech.summer_hackathon.domain.model.Department;
 import rut.miit.tech.summer_hackathon.domain.model.Moderator;
 import rut.miit.tech.summer_hackathon.repository.ModeratorRepository;
@@ -76,8 +76,10 @@ public class ModeratorServiceImpl implements ModeratorService {
     }
 
     @Override
-    public PageResult<Moderator> getAll(Specification<Moderator> filter, Pageable pageable) {
-        return PageResult.of(moderatorRepository.findAll(filter, pageable), pageable);
+    public PageResult<Moderator> getAll(ModeratorFilter filter, Pageable pageable) {
+        return PageResult.of(moderatorRepository.findAll(filter
+                .copy()
+                .withJoin("departments"), filter, pageable), pageable);
     }
 
     @Override

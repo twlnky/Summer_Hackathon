@@ -19,28 +19,17 @@ import rut.miit.tech.summer_hackathon.service.util.PageResult;
 public class UserController {
     private final UserService userService;
 
-    @PutMapping("/{id}")
-    @ResponseStatus(code = HttpStatus.ACCEPTED)
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
-    public UserDTO update(@PathVariable Long id,
-                          @RequestBody UserDTO userDTO) {
-
-        return userService.update(id, userDTO.toModel()).toDto();
-    }
-
-
     @GetMapping("/public")
     public PageResult<UserDTO> getAllUsers(@ModelAttribute UserFilter userFilter,
                                            @ModelAttribute PageParam pageParam,
-                                           @ModelAttribute SortParam sortParam) {
+                                           @ModelAttribute SortParam sortParam){
         return userService.getAll(userFilter, pageParam.toPageable(sortParam)).map(User::toDto);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
     public PageResult<UserDTO> getAllUsersPrivate(@ModelAttribute UserFilter userFilter,
                                                   @ModelAttribute PageParam pageParam,
-                                                  @ModelAttribute SortParam sortParam) {
+                                                  @ModelAttribute SortParam sortParam){
         return userService.getAll(userFilter, pageParam.toPageable(sortParam)).map(User::toDto);
     }
 
@@ -57,6 +46,14 @@ public class UserController {
         return userService.save(userDTO.toModel()).toDto();
     }
 
+    @PutMapping("/{id}")
+    @ResponseStatus(code = HttpStatus.ACCEPTED)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    public UserDTO update(@PathVariable Long id,
+                          @RequestBody UserDTO userDTO) {
+
+        return userService.update(id, userDTO.toModel()).toDto();
+    }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
@@ -65,6 +62,4 @@ public class UserController {
 
         userService.delete(id);
     }
-
-
 }

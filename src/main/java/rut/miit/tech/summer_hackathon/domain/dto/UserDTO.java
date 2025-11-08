@@ -22,7 +22,6 @@ public record UserDTO(
 ) {
 
     public User toModel() {
-
         Moderator moderator = null;
         if (moderatorId != null) {
             moderator = Moderator.builder().id(moderatorId).build();

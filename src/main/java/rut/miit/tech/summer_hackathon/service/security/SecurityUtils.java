@@ -4,13 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import rut.miit.tech.summer_hackathon.domain.exception.ResourceNotFoundException;
 import rut.miit.tech.summer_hackathon.domain.model.Moderator;
-import rut.miit.tech.summer_hackathon.service.moderator.ModeratorService;
+import rut.miit.tech.summer_hackathon.repository.ModeratorRepository;
 
 @Component
 @RequiredArgsConstructor
 public class SecurityUtils {
-    private final ModeratorService moderatorService;
+    private final ModeratorRepository repository;
 
     public static boolean isAdmin() {
         return SecurityContextHolder.getContext()
@@ -32,10 +33,6 @@ public class SecurityUtils {
                 .contains("MODERATOR");
     }
 
-
-
-
-
     public static void checkIsAdmin() throws AccessDeniedException {
         if (!isAdmin()) {
             throw new AccessDeniedException("ADMIN role is required for this action");
@@ -47,7 +44,7 @@ public class SecurityUtils {
             throw new IllegalStateException("Current authenticated user is not MODERATOR");
         }
         String login = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return moderatorService.getByLogin(login);
+        return repository.findByLogin(login).orElseThrow(() -> new ResourceNotFoundException("No moder with login: " + login));
     }
 
 }

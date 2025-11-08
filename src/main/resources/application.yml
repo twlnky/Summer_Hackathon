@@ -1,6 +1,7 @@
 spring:
   application:
     name: SecurityRestAPI
+
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -29,3 +30,6 @@ security:
     access:
       secret: ${JWT_ACCESS_SECRET}
       expires: ${JWT_ACCESS_EXPIRES}
+    refresh:
+      secret: ${JWT_REFRESH_SECRET}
+      expires: ${JWT_REFRESH_EXPIRES}

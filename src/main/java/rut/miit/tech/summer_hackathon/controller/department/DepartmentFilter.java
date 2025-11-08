@@ -11,7 +11,6 @@ public class DepartmentFilter implements Specification<Department> {
 
     private String name;
 
-// N+1
     @Override
     public Predicate toPredicate(Root<Department> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 
