@@ -13,9 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Table(name = "moderator", indexes = {
-        @Index(name = "idx_moderator_id", columnList = "id"),
-        @Index(name = "idx_moderator_login", columnList = "login"),
-        @Index(name = "idx_moderator_password", columnList = "password")
+        @Index(name = "idx_moderator_login", columnList = "login")
 })
 public class Moderator {
 
@@ -42,8 +40,8 @@ public class Moderator {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "moderator")
     private List<Department> departments;
 
-    public ModeratorDTO toDto(){
-        return new ModeratorDTO(id,login,password, departments != null && !departments.isEmpty() ? departments.stream().map(Department::getId).toList() : List.of());
+    public ModeratorDTO toDto() {
+        return new ModeratorDTO(id, login, password, departments != null && !departments.isEmpty() ? departments.stream().map(Department::getId).toList() : List.of());
     }
 
 }

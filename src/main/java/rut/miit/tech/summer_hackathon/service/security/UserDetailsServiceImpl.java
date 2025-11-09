@@ -18,12 +18,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if(username.equals(admin.getUsername())){
+        if (username.equals(admin.getUsername())) {
             return admin;
         }
         try {
             return new ModeratorDetailsImpl(moderatorService.getByLogin(username));
-        }catch (ResourceNotFoundException e){
+        } catch (ResourceNotFoundException e) {
             throw new UsernameNotFoundException(username + " not found");
         }
     }

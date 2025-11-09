@@ -1,9 +1,9 @@
 package rut.miit.tech.summer_hackathon.controller;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -21,20 +21,18 @@ import rut.miit.tech.summer_hackathon.domain.dto.RegisterDTO;
 import rut.miit.tech.summer_hackathon.domain.dto.UserDTO;
 import rut.miit.tech.summer_hackathon.domain.exception.UnauthorizedException;
 import rut.miit.tech.summer_hackathon.domain.model.Moderator;
-import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.domain.model.RefreshToken;
+import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.domain.util.DtoConverter;
 import rut.miit.tech.summer_hackathon.repository.ModeratorRepository;
-import rut.miit.tech.summer_hackathon.service.JwtService;
-import rut.miit.tech.summer_hackathon.service.registration.RegistrationService;
 import rut.miit.tech.summer_hackathon.repository.RefreshTokenRepository;
 import rut.miit.tech.summer_hackathon.repository.UserRepository;
+import rut.miit.tech.summer_hackathon.service.JwtService;
+import rut.miit.tech.summer_hackathon.service.registration.RegistrationService;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -67,7 +65,6 @@ public class AuthController {
                     .stream()
                     .map(SimpleGrantedAuthority::new)
                     .toList());
-            // Можно добавить другие поля, если нужно
             return ResponseEntity.ok(userInfo);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("User info not available");
@@ -103,7 +100,7 @@ public class AuthController {
                 Moderator moderator = moderatorRepository.findByLogin(dto.username())
                         .orElseThrow(() -> new RuntimeException("Moderator not found"));
 
-                // Ищем User по ID модератора
+
                 user = userRepository.findById(moderator.getId()).orElse(null);
                 if (user == null) {
 
@@ -114,7 +111,7 @@ public class AuthController {
                     user.setEmail(moderator.getLogin());
                     user.setModerator(moderator);
 
-                    user = userRepository.save(user); // Сохраняем нового пользователя
+                    user = userRepository.save(user);
                 }
             }
 
@@ -148,7 +145,6 @@ public class AuthController {
 
 
 
-    //Пробегаемся по куке и если имя совпало, то реврешим
     @GetMapping("/refresh")
     public ResponseEntity<JWTResponse> refresh(HttpServletRequest request) {
         String refreshToken = null;
@@ -164,7 +160,7 @@ public class AuthController {
         if (refreshToken == null) {
             throw new RuntimeException("refresh token not found in cookie");
         }
-    com.auth0.jwt.interfaces.DecodedJWT decodedRefreshToken = jwtService.decodeRefreshToken(refreshToken);
+        com.auth0.jwt.interfaces.DecodedJWT decodedRefreshToken = jwtService.decodeRefreshToken(refreshToken);
         String newAccessToken = jwtService.createAccess(decodedRefreshToken);
         return ResponseEntity.ok(new JWTResponse(newAccessToken));
     }
@@ -196,7 +192,7 @@ public class AuthController {
         revokeCookie.setPath("/");
         revokeCookie.setHttpOnly(true);
         revokeCookie.setSecure(true);
-        revokeCookie.setMaxAge(0);           // удаление куки
+        revokeCookie.setMaxAge(0);
         response.addCookie(revokeCookie);
     }
 
@@ -214,14 +210,15 @@ public class AuthController {
         User registeredUser = registrationService.register(dto);
         return dtoConverter.toDto(registeredUser, UserDTO.class);
     }
+
     private User convertModeratorToUser(Moderator moderator) {
         User user = new User();
         user.setId(moderator.getId());
         user.setFirstName(moderator.getFirstName());
         user.setLastName(moderator.getLastName());
         user.setMiddleName(moderator.getMiddleName());
-        user.setEmail(moderator.getLogin()); // логин модератора
-        user.setModerator(moderator); // важная пометка, что это модератор
+        user.setEmail(moderator.getLogin());
+        user.setModerator(moderator);
         return user;
     }
 

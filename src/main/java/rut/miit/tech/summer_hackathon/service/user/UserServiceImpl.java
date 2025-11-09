@@ -3,14 +3,12 @@ package rut.miit.tech.summer_hackathon.service.user;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.Banner;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import rut.miit.tech.summer_hackathon.controller.user.UserFilter;
 import rut.miit.tech.summer_hackathon.domain.model.Department;
@@ -33,7 +31,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final DepartmentService departmentService;
-    private final PasswordEncoder passwordEncoder;
+
     private final SecurityUtils securityUtils;
 
     @Override
@@ -64,23 +62,19 @@ public class UserServiceImpl implements UserService {
             throw new AccessDeniedException("Cannot update user, because you're not legal moderator");
         }
         Moderator authenticatedModerator = securityUtils.getAuthenticatedModerator();
-        //Если текущий модератор - тот же модератор что и в базе данных
-        //То есть имеет полные права на обновление
+
         if (authenticatedModerator.getId().equals(beforeUpdateUser.getModerator().getId())) {
-            //TODO: проверка на правильность обновление подразделений
             return userRepository.save(user);
         }
-        //Если редактирует не основной модератор - нужно проверить, корректность обновления
-        //Если есть попытка обновление основных атрибутов - отказываем
+
         if (!user.equals(beforeUpdateUser)) {
             throw new AccessDeniedException("Cannot update user attributes, because you're not main moderator");
         }
-        //Если есть попытка переназначить модератора
+
         if (!user.getModerator().getId().equals(beforeUpdateUser.getModerator().getId())) {
             throw new AccessDeniedException("Cannot update user's moderator, only admin has that permission");
         }
-        //Проверка на то, что изменены, только подразделения, управляемые модераторомм
-        //Если модератор задел связи с другими подразделениями - это нарушение прав
+
         if (!checkModeratorRelationsViolation(beforeUpdateUser,
                 user,
                 authenticatedModerator)) {
@@ -106,7 +100,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void delete(Long id) {
         User user = getById(id);
-        if(SecurityUtils.isAdmin()){
+        if (SecurityUtils.isAdmin()) {
             userRepository.deleteById(id);
             return;
         }
@@ -114,7 +108,7 @@ public class UserServiceImpl implements UserService {
         if (user.getModerator() == null) {
             throw new AccessDeniedException("Cannot delete user, because you're not legal moderator");
         }
-        if(!user.getModerator().getId().equals(moderator.getId())){
+        if (!user.getModerator().getId().equals(moderator.getId())) {
             throw new AccessDeniedException("Cannot delete user, because you're not main moderator");
         }
         userRepository.deleteById(id);
@@ -133,40 +127,39 @@ public class UserServiceImpl implements UserService {
         if (request.isBlank()) {
             return getAll(new UserFilter(), pageable);
         }
-        
+
         Specification<User> filter = ((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            
-            // Поиск по текстовым полям - добавим вариант без LOWER для кириллицы
+
+
             String lowerRequest = request.toLowerCase();
-            
-            // Поиск по именам и фамилиям - как с LOWER, так и без
+
+
             predicates.add(cb.like(cb.lower(root.get("firstName")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("firstName"), "%" + request + "%"));
             predicates.add(cb.like(cb.lower(root.get("lastName")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("lastName"), "%" + request + "%"));
             predicates.add(cb.like(cb.lower(root.get("middleName")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("middleName"), "%" + request + "%"));
-            
-            // Email и другие поля
+
+
             predicates.add(cb.like(cb.lower(root.get("email")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("personalPhone"), "%" + request + "%"));
             predicates.add(cb.like(cb.lower(root.get("position")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("position"), "%" + request + "%"));
             predicates.add(cb.like(cb.lower(root.get("note")), "%" + lowerRequest + "%"));
             predicates.add(cb.like(root.get("note"), "%" + request + "%"));
-            
-            // Поиск по числовому полю officeNumber
+
+
             try {
                 Long officeNumberLong = Long.parseLong(request);
                 predicates.add(cb.equal(root.get("officeNumber"), officeNumberLong));
             } catch (NumberFormatException e) {
-                // Если запрос не является числом, просто игнорируем поиск по officeNumber
             }
-            
+
             return cb.or(predicates.toArray(new Predicate[0]));
         });
-        
+
         return PageResult.of(userRepository.findAll(filter, pageable), pageable);
     }
 
