@@ -2,9 +2,9 @@ package rut.miit.tech.summer_hackathon.controller;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -26,12 +26,13 @@ import rut.miit.tech.summer_hackathon.domain.model.Moderator;
 import rut.miit.tech.summer_hackathon.domain.model.RevokedToken;
 import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.domain.model.RefreshToken;
+import rut.miit.tech.summer_hackathon.domain.model.User;
 import rut.miit.tech.summer_hackathon.domain.util.DtoConverter;
 import rut.miit.tech.summer_hackathon.repository.ModeratorRepository;
-import rut.miit.tech.summer_hackathon.service.JwtService;
-import rut.miit.tech.summer_hackathon.service.registration.RegistrationService;
 import rut.miit.tech.summer_hackathon.repository.RefreshTokenRepository;
 import rut.miit.tech.summer_hackathon.repository.UserRepository;
+import rut.miit.tech.summer_hackathon.service.JwtService;
+import rut.miit.tech.summer_hackathon.service.registration.RegistrationService;
 
 import java.time.Duration;
 import java.time.Instant;

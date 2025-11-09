@@ -6,10 +6,8 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.security.core.userdetails.UserDetails;
-import rut.miit.tech.summer_hackathon.repository.RevokedTokenRepository;
-import rut.miit.tech.summer_hackathon.repository.RefreshTokenRepository;
+import org.springframework.stereotype.Service;
 import rut.miit.tech.summer_hackathon.domain.model.RefreshToken;
 
 import java.sql.Timestamp;
@@ -67,7 +65,7 @@ public class JwtService {
         return JWT.create()
                 .withSubject(user.getUsername())
                 .withIssuer("security-api")
-                .withClaim("purpose","access")
+                .withClaim("purpose", "access")
                 .withIssuedAt(Timestamp.from(Instant.now()))
                 .withExpiresAt(Timestamp.from(Instant.now().plus(accessLifetime)))
                 .withArrayClaim("roles", user.getAuthorities()
@@ -85,7 +83,7 @@ public class JwtService {
         return JWT.create()
                 .withSubject(user.getUsername())
                 .withIssuer("security-api")
-                .withClaim("purpose","refresh")
+                .withClaim("purpose", "refresh")
                 .withIssuedAt(Timestamp.from(Instant.now()))
                 .withExpiresAt(Timestamp.from(Instant.now().plus(refreshLifetime)))
                 .withArrayClaim("roles", user.getAuthorities().stream().map(Object::toString).toList().toArray(new String[0]))
@@ -122,7 +120,7 @@ public class JwtService {
     //Это создание нового аксесса, если рефреш существует и он не ревокнут
     public String createAccess(@NotNull DecodedJWT refreshToken) {
         String jti = refreshToken.getId();
-        //Проверка на то, что он существует
+
         RefreshToken stored = refreshTokenRepository.findByJti(jti)
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
         //Проверка, чтобы токен существовал, но не был реворкнут

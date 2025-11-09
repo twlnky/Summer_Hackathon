@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import rut.miit.tech.summer_hackathon.controller.department.DepartmentFilter;
 import rut.miit.tech.summer_hackathon.controller.query.PageParam;
 import rut.miit.tech.summer_hackathon.controller.query.SortParam;
 import rut.miit.tech.summer_hackathon.domain.dto.UserDTO;
@@ -28,7 +27,6 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
     public PageResult<UserDTO> getAllUsersPrivate(@ModelAttribute UserFilter userFilter,
                                                   @ModelAttribute PageParam pageParam,
                                                   @ModelAttribute SortParam sortParam){
@@ -64,6 +62,4 @@ public class UserController {
 
         userService.delete(id);
     }
-
-
 }

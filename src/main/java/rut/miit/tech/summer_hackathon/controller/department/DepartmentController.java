@@ -25,8 +25,8 @@ public class DepartmentController {
 
     @GetMapping("/public")
     public PageResult<DepartmentDTO> getAll(@ModelAttribute DepartmentFilter departmentFilter,
-                                @ModelAttribute PageParam pageParam,
-                                @ModelAttribute SortParam sortParam){
+                                            @ModelAttribute PageParam pageParam,
+                                            @ModelAttribute SortParam sortParam){
         return departmentService.getAll(departmentFilter, pageParam.toPageable(sortParam)).map(Department::toDto);
     }
 
@@ -42,9 +42,9 @@ public class DepartmentController {
 
     @GetMapping("/public/{id}")
     public DepartmentDTO getDepartmentById(@ModelAttribute DepartmentFilter departmentFilter,
-                                                       @ModelAttribute PageParam pageParam,
-                                                       @ModelAttribute SortParam sortParam,
-                                                       @PathVariable Long id){
+                                           @ModelAttribute PageParam pageParam,
+                                           @ModelAttribute SortParam sortParam,
+                                           @PathVariable Long id){
         return departmentService.getById(id).toDto();
     }
 
@@ -69,7 +69,7 @@ public class DepartmentController {
         departmentService.deleteById(id);
     }
 
-    // Добавить пользователя в департамент
+
     @PostMapping("/{departmentId}/users/{userId}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
     @ResponseStatus(code = HttpStatus.OK)
@@ -77,7 +77,7 @@ public class DepartmentController {
         departmentService.addUserToDepartment(departmentId, userId);
     }
 
-    // Удалить пользователя из департамента
+
     @DeleteMapping("/{departmentId}/users/{userId}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)

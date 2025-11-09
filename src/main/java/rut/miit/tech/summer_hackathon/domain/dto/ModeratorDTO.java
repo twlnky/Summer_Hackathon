@@ -1,6 +1,5 @@
 package rut.miit.tech.summer_hackathon.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -46,9 +45,9 @@ public record ModeratorDTO(
                 id,
                 login,
                 password,
-                null, // firstName - устанавливаем null по умолчанию
-                null, // lastName - устанавливаем null по умолчанию
-                null, // middleName - устанавливаем null по умолчанию
+                null,
+                null,
+                null,
                 departments
         );
     }

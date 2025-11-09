@@ -32,7 +32,8 @@ public class SecurityConfig {
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/api/v1/auth/**",
             "/api/v1/*/public/**",
-            "/api/v1/search/**"
+            "/api/v1/search/**",
+            "/api/v1/users"
     );
 
 

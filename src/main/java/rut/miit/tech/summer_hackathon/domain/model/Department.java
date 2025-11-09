@@ -14,9 +14,7 @@ import java.util.List;
 @Getter
 @Entity
 @Table(name = "department", indexes = {
-        @Index(name = "idx_department_id", columnList = "id"),
-        @Index(name = "idx_department_name", columnList = "department_name"),
-        @Index(name = "idx_department_moderator", columnList = "moderator_id")
+        @Index(name = "idx_department_moderator_connection", columnList = "department_name, moderator_id")
 })
 public class Department {
 

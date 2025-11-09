@@ -1,6 +1,7 @@
 spring:
   application:
     name: SecurityRestAPI
+
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
