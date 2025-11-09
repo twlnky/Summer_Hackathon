@@ -5,21 +5,31 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Entity
 @Getter
+@Setter
 @RequiredArgsConstructor
-@Table
-//TODO: доделать Revoked токен + проверка Access токена на обновление
-//Токен для логаута, тчобы отслеживать
+@Table(name = "revoked_tokens")
 public class RevokedToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //Его id
     private Long id;
 
-    @Setter
-    //Id токена, который жвтИд
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String token;
 
+    @Column(nullable = false)
+    private Instant revokedAt;
+
+    @Column(nullable = false)
+    private String tokenType; // "access" или "refresh"
+
+    @PrePersist
+    protected void onCreate() {
+        if (revokedAt == null) {
+            revokedAt = Instant.now();
+        }
+    }
 }
